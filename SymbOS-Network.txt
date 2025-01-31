@@ -1,0 +1,450 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / SymbiosiS
+Date:   19.10.2021
+===============================================================================
+
+N E T W O R K   D A E M O N
+
+The SymbOS network daemon provides all services for full network access. It's
+running as a shared service process [...]
+
+
+===============================================================================
+NETWORK DAEMON MESSAGES
+
+The Network Daemon is running as a shared service process and can be acessed
+via messages.
+
+First you have to check, if the network daemon is existing by using the PRGSRV
+function of the system manager (see SymbOS-System.txt, MSC_SYS_PRGSRV). Always
+use command type 0 ("search application or shared service"). The 12byte
+application ID string is "Network Daem", written exactly like this.
+
+If the Network Daemon was found, you can store its process ID and use it for
+the message based communication. Messages use standardized Z80 register sets,
+so you can always copy your Z80 registers in the same order into the message
+buffer.
+-------------------------------------------------------------------------------
+An application has to send the message in the following way to the network
+daemon to execute a function:
+
+Message:        00  1B  Network Daemon function ID (see below)
+                02  1W  input for AF
+                04  1W  input for BC
+                06  1W  input for DE
+                08  1W  input for HL
+                10  1W  input for IX
+                12  1W  input for IY
+-------------------------------------------------------------------------------
+The network daemon sends this message back to the application, after the
+execution of the function has been finished.
+
+Message:        00  1B  Network Daemon function ID + 128
+                02  1W  output for AF
+                04  1W  output for BC
+                06  1W  output for DE
+                08  1W  output for HL
+                10  1W  output for IX
+                12  1W  output for IY
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+ERROR CODES
+
+All network daemon functions return the success status in the carry flag. If
+the carry flag is not set, the operation was successful. If it is set, an error
+occured.
+In this case, the A-register contains the error code number. The following is a
+list of all possible error codes.
+-------------------------------------------------------------------------------
+General
+001 - No hardware setup
+002 - No IP configuration
+003 - Function is not supported
+004 - Unknown hardware error
+005 - Offline/not connected
+006 - Wifi error (SF3 specific)
+
+Socket
+008 - no more free socket
+009 - socket does not exist
+010 - wrong socket type
+011 - socket is in use for another process
+
+DNS
+016 - invalid domain string
+017 - timeout
+018 - recursion not supported
+019 - truncated answer
+020 - package too large
+
+TCP
+024 - connection not yet established
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+CONFIG FUNCTIONS
+
+[...coming soon...]
+-------------------------------------------------------------------------------
+ID:             001 (CFGGET)
+Name:           Config_GetData
+Library:        SyNet_DNSRSV
+Input:          A    = Type
+                HL   = Config data buffer
+Output:         CF   = status (CF=1 invalid type)
+Destroyed:      AF,BC,DE,HL,IX,IY
+Description:    [...]
+-------------------------------------------------------------------------------
+ID:             002 (CFGSET)
+Name:           Config_SetData
+Library:        SyNet_CFGSET
+Input:          A    = Type
+                HL   = New config data
+Output:         CF   = status (CF=1 invalid type)
+Destroyed:      AF,BC,DE,HL,IX,IY
+Description:    [...]
+-------------------------------------------------------------------------------
+ID:             003 (CFGSCK)
+Name:           Config_SocketStatus
+Library:        SyNet_CFGSCK
+Input:          A    = first socket
+                C    = number of sockets
+                HL   = data buffer
+Output:         CF   = status (CF=1 invalid range)
+Destroyed:      AF,BC,DE,HL,IX,IY
+Description:    [...]
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+TCP FUNCTIONS
+
+TCP is connection-oriented, and a connection between client and server is
+established before data can be sent. The server must be listening (passive
+open) for connection requests from clients before a connection is established.
+-------------------------------------------------------------------------------
+ID:             016 (TCPOPN)
+Name:           TCP_Open
+Library:        SyNet_TCPOPN
+Input:          A    = Type (0=active/client, 1=passive/server)
+                HL   = Local port (-1=dynamic client port)
+                - if A is 0:
+                IX,IY= Remote IP
+                DE   = Remote port
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Opens a TCP connection as a client (active) or as a server
+                (passive). If it's an active connection you have to specify
+                the remote IP address and port number as well.
+                The local port number always has to be set. For client
+                network applications you should set HL to -1 (65535) to get
+                a dynamic port number. This will automaticaly generated by
+                the network daemon in the range of 49152-65535 (official
+                range for dynamic ports).
+                This function will fail, if there is no free socket left.
+                It returns the connection handle if it was successful.
+-------------------------------------------------------------------------------
+ID:             017 (TCPCLO)
+Name:           TCP_Close
+Library:        SyNet_TCPCLO
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Closes a TCP connection and releases the used socket. It
+                will not send a disconnect signal to the remote host (see
+                TCPDIS). Use this, after the remote host already
+                closed the connection.
+-------------------------------------------------------------------------------
+ID:             018 (TCPSTA)
+Name:           TCP_Status
+Library:        SyNet_TCPSTA
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+                L    = Status (1=TCP opening, 2=TCP established, 3=TCP
+                       close waiting, 4=TCP close; +128=data received)
+                - if L is >1:
+                IX,IY= Remote IP
+                DE   = Remote port
+                - if L is >=128:
+                BC   = Received bytes (which are available in the RX
+                       buffer)
+Destroyed:      F,H
+Description:    Returns the actual status of the TCP connection. Usually
+                this is exactly the same as received in the last event
+                message (see TCPEVT). The number of received bytes in BC
+                may have been increased during the last event, if it was
+                already larger than 0.
+-------------------------------------------------------------------------------
+ID:             019 (TCPRCV)
+Name:           TCP_Receive
+Library:        SyNet_TCPRCV
+Input:          A    = Handle
+                E    = Destination bank
+                HL   = Destination address
+                BC   = Length (has to be >0)
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+                BC   = Number of transfered bytes (which have been copied
+                       to the destination)
+                HL   = Number of remaining bytes (which are still left in
+                       the RX buffer)
+                ZF   = 1 -> no remaining bytes (RX buffer is empty)
+Destroyed:      F,DE,HL,IX,IY
+Description:    Copies data, which has been received from the remote host,
+                to a specified destination in memory. The length of the
+                requested data is not limited, but this function will only
+                receive the available one.
+                Please note, that a new TCPEVT event only occurs on new
+                incoming bytes, if this function returned HL=0 (no
+                remaining bytes). It may happen, that during the last
+                TCPEVT/TCPSTA status the number of remaining bytes has been
+                increased, so you always have to check HL, even if you
+                requested all incoming bytes known from the last status.
+-------------------------------------------------------------------------------
+ID:             020 (TCPSND)
+Name:           TCP_Send
+Library:        SyNet_TCPSND
+Input:          A    = Handle
+                E    = Source bank
+                HL   = Source address
+                BC   = Length
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+                BC   = Number of transfered bytes
+                HL   = Number of remaining bytes (which couldn't be
+                       transfered, as the TX buffer is full at the moment)
+                ZF   = 1 -> no remaining bytes
+Destroyed:      F,DE,IX,IY
+Description:    Sends data to the remote host. The length of the data is
+                not limited, but this function may send only a part of it.
+                In case that not all data have been send, the application
+                should idle for a short time and send the remaining part
+                at another attempt.
+-------------------------------------------------------------------------------
+ID:             021 (TCPSKP)
+Name:           TCP_Skip
+Library:        SyNet_TCPSKP
+Input:          A    = Handle
+                BC   = Length
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Skips data, which has been received from the remote host.
+                This can be used if the application is sure, that the
+                following bytes are not needed and the data transfer can be
+                skipped to save resources. The amount of bytes must be
+                equal or smaller than the total amount of received data.
+-------------------------------------------------------------------------------
+ID:             022 (TCPFLS)
+Name:           TCP_Flush
+Library:        SyNet_TCPFLS
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Flushes the send buffer. This maybe used to send data
+                immediately, as some network hardware or software
+                implementations may store it first in the send buffer for a
+                while until it is full or a special amount of time has
+                passed.
+-------------------------------------------------------------------------------
+ID:             023 (TCPDIS)
+Name:           TCP_Disconnect
+Library:        SyNet_TCPDIS
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Sends a disconnect signal to the remote host, closes the
+                TCP connection and releases the used socket. Use this, if
+                you want to close the connection by yourself.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+UDP FUNCTIONS
+
+UDP uses a simple connectionless communication model with a minimum of protocol
+mechanisms. It has no handshaking dialogues, and thus exposes the application
+to any unreliability of the underlying network. There is no guarantee of
+delivery, ordering, or duplicate protection.
+-------------------------------------------------------------------------------
+ID:             032 (UDPOPN)
+Name:           UDP_Open
+Library:        SyNet_UDPOPN
+Input:          A    = Type
+                HL   = Local port
+                E    = Source/destination bank for receive/send
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Opens an UDP session. Already with this functions you have
+                to specify the ram bank number of the source and
+                destination memory areas for upcoming data transfer.
+                This function will fail, if there is no free socket left.
+                It returns the session handle if it was successful.
+-------------------------------------------------------------------------------
+ID:             033 (UDPCLO)
+Name:           UDP_Close
+Library:        SyNet_UDPCLO
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Closes an UDP session and releases the used socket.
+-------------------------------------------------------------------------------
+ID:             034 (UDPSTA)
+Name:           UDP_Status
+Library:        SyNet_UDPSTA
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+                L    = Status
+                - if L is ???:
+                BC   = Received bytes
+                IX,IY= Remote IP
+                DE   = Remote port
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Returns the actual status of the UDP session. This is
+                always exactly the same as received in the last event
+                message (see UDPEVT).
+-------------------------------------------------------------------------------
+ID:             035 (UDPRCV)
+Name:           UDP_Receive
+Library:        SyNet_UDPRCV
+Input:          A    = Handle
+                HL   = Destination address
+                       (bank has been specified by the UDPOPN function)
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Copies the package data, which has been received from a
+                remote host, to a specified destination in memory. Please
+                note, that this function will always transfer the whole
+                data at once, so there should be enough place at the
+                destination address. The destination ram bank number has
+                already been specified with the UDPOPN function.
+-------------------------------------------------------------------------------
+ID:             036 (UDPSND)
+Name:           UDP_Send
+Library:        SyNet_UDPSND
+Input:          A    = Handle
+                HL   = Source address
+                       (bank has been specified by the UDPOPN function)
+                BC   = Length
+                IX,IY= Remote IP
+                DE   = Remote port
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Sends a data package to a remote host. It may happen, that
+                the send buffer is currently full, and this function will
+                the return the appropriate error code. In this case the
+                application should idle for a short time and try to send
+                the package again at another attempt.
+-------------------------------------------------------------------------------
+ID:             037 (UDPSKP)
+Name:           UDP_Skip
+Library:        SyNet_UDPSKP
+Input:          A    = Handle
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                A    = Handle
+Destroyed:      F,BC,DE,HL,IX,IY
+Description:    Skips a received data package. This can be used if the
+                application is sure, that the data is not needed or has
+                sent from the wrong remote host, so the data transfer can
+                be skipped to save resources.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+DNS FUNCTIONS
+
+As TCP and UDP network communication is based on IP addresses, you have to find
+out the IP address of a server first, if you only know its domain name. Use the
+DNS resolve function to get the dedicated IP address.
+-------------------------------------------------------------------------------
+ID:             112 (DNSRSV)
+Name:           DNS_Resolve
+Library:        SyNet_DNSRSV
+Input:          HL = string address (0-terminated)
+Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+                - if CF is 0:
+                IX,IY= IP
+Destroyed:      AF,BC,DE,HL
+Description:    Makes a DNS look up and tries to resolve an IP address.
+-------------------------------------------------------------------------------
+ID:             113 (DNSVFY)
+Name:           DNS_Verify
+Library:        SyNet_DNSVFY
+Input:          HL = string address (0-terminated)
+Output:         L    = type of address (0=no valid address, 1=IP address,
+                                        2=domain address)
+                - if L is 1:
+                IX,IY= IP
+Destroyed:      F,BC,DE,HL
+Description:    Checks, if a string is a valid IP or domain address.
+                This won't do any activity with the network hardware but
+                you can use this to test, if an entered IP number or domain
+                address seems to be typed correctly.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+FUNCTION MAP
+
+This is a compact overview of all network daemon functions.
+As you can see, the usage of the registers is mostly unified.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+Name            ID                  Input                                                           Ouput
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+CONFIGURATION
+
+Config_Get      CFGGET  001 130     A=type, E,HL=data buffer                                        (buffer has been filled)
+Config_Set      CFGSET  002 131     A=type, E,HL=config data                                        (config has been set)
+Config_Socket   CFGSCK  003 132     A=first socket, C=number of sockets, HL=data buffer             cf=0 -> ok
+
+TRANSPORTATION LAYER SERVICES
+
+TCP_Open        TCPOPN  016 144     A=mode,   HL=local port (,IX,IY=remote IP, DE=remote port)      cf=0 -> ok, A=handle
+TCP_Close       TCPCLO  017 145     A=handle                                                        cf=0 -> ok, A=handle
+TCP_Status      TCPSTA  018 146     A=handle                                                        cf=0 -> ok, A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
+TCP_Receive     TCPRCV  019 147     A=handle, BC=length, E,HL=memory                                cf=0 -> ok, A=handle, BC=number of remaining bytes, ZF=1 -> all bytes have been received
+TCP_Send        TCPSND  020 148     A=handle, BC=length, E,HL=memory                                cf=0 -> ok, A=handle, BC=number of sent bytes, HL=number of remaining bytes, ZF=1 -> all bytes have been sent
+TCP_Skip        TCPSKP  021 149     A=handle, BC=length                                             cf=0 -> ok, A=handle
+TCP_Flush       TCPFLS  022 150     A=handle                                                        cf=0 -> ok, A=handle
+TCP_Disconnect  TCPDIS  023 151     A=handle                                                        cf=0 -> ok, A=handle
+TCP_Event       TCPEVT      159                                                                                 A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
+
+UDP_Open        UDPOPN  032 160               HL=local port, E=memory bank                          cf=0 -> ok, A=handle
+UDP_Close       UDPCLO  033 161     A=handle                                                        cf=0 -> ok, A=handle
+UDP_Status      UDPSTA  034 162     A=handle                                                        cf=0 -> ok, A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
+UDP_Receive     UDPRCV  035 163     A=handle,            HL=memory                                  cf=0 -> ok, A=handle
+UDP_Send        UDPSND  036 164     A=handle, BC=length, HL=memory, IX,IY=remote IP, DE=remote port cf=0 -> ok, A=handle
+UDP_Skip        UDPSKP  037 165     A=handle                                                        cf=0 -> ok, A=handle
+UDP_Event       UDPEVT      175                                                                                 A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
+
+APPLICATION LAYER SERVICES
+
+DNS_Resolve     DNSRSV  112 240     E,HL=address                                                    cf=0 -> ok, IX,IY=IP
+DNS_Verify      DNSVFY  113 241     E,HL=address                                                                A=type of address (0=no valid address, 1=IP address, 2=domain address)

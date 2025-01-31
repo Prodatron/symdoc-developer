@@ -1,0 +1,33 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / SymbiosiS
+Date:   27.09.2016
+===============================================================================
+
+S C R E E N   M A N A G E R
+
+The screen manager contains all routines for the direct access of the video
+hardware.
+There is currently only one function, that can be used by applications as well.
+
+
+===============================================================================
+SCREEN MANAGER FUNCTIONS
+
+The screen manager functions have to be called with RST #20 (BNKSCL).
+-------------------------------------------------------------------------------
+Address:        #815D (TXTLEN)
+Name:           Screen_TextLength
+How to call:    rst #20:dw #815d
+Input:          HL   = Text address
+                A    = Text ram bank (1-15)
+                IY   = maximal number of chars (text length)
+Output:         DE   = Text width in pixels
+                A    = Text height in pixels
+Destroyed:      F,BC,HL,IX
+Description:    Returns the width and height of a textline in pixels, if it
+                would be printed to the screen. You can define the text length
+                (number of chars) in IY. If the text is terminated by 0 or 13
+                you should use -1 for the maximal text length. Please note,
+                that this function always uses the system font for calculating
+                the width and height.
+-------------------------------------------------------------------------------

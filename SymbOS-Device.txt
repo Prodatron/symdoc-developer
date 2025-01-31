@@ -1,0 +1,264 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / SymbiosiS
+Date:   29.08.2014
+===============================================================================
+
+D E V I C E   M A N A G E R
+
+The device manager controls all parts of the hardware. In general the
+applications do not communicate with the device manager directly, as other
+parts of the operating system are between the device manager and the
+application, like the system manager and the desktop manager.
+So there are only a few functions of the device manager, which can be called
+and used directly.
+
+
+===============================================================================
+DEVICE MANAGER FUNCTIONS
+
+The device manager functions have to be called with RST #20 (BNKSCL).
+-------------------------------------------------------------------------------
+Address:        #810C (TIMGET)
+Name:           Device_TimeGet
+How to call:    rst #20:dw #810c
+Input:          -
+Output:         A    = Second (0 - 59)
+                B    = Minute (0 - 59)
+                C    = Hour (0 - 23)
+                D    = Day (1 - 31)
+                E    = Month (1 - 12)
+                HL   = Year (1900 - 2100)
+                IXL  = Timezone (-12 - +13)
+Destroyed:      F,IY
+Description:    Returns the current time.
+-------------------------------------------------------------------------------
+Address:        #810F (TIMSET)
+Name:           Device_TimeSet
+How to call:    rst #20:dw #810f
+Input:          A    = Second (0 - 59)
+                B    = Minute (0 - 59)
+                C    = Hour (0 - 23)
+                D    = Day (1 - 31)
+                E    = Month (1 - 12)
+                HL   = Year (1900 - 2100)
+                IXL  = Timezone (-12 - +13)
+Output:         -
+Destroyed:      AF,BC,DE,HL,IY
+Description:    Sets the current time.
+-------------------------------------------------------------------------------
+Address:        #8136 (SCRSET)
+Name:           Device_ScreenModeCPCSet
+How to call:    ld hl,#8136:rst #28
+Input:          E    = CPC screen mode (0,1,2)
+Output:         -
+Destroyed:      -
+Description:    Sets the current CPC screen mode. This function is CPC specific
+                only and has to be called by applications using the fullscreen
+                mode with locked Desktop Manager and direct video memory access
+                (see BNK16C also). It is needed for ROM based device drivers,
+                which have to know the screen mode as well when switching on/
+                off ROMs.
+-------------------------------------------------------------------------------
+Address:        #8139 (SCRGET)
+Name:           Device_ScreenMode
+How to call:    ld hl,#8139:rst #28
+Input:          -
+Output:         E    = screen mode (1,2=CPC/EP, 5,6,7=MSX, 8,9,10,11=G9K,
+                                   0=PCW)
+                D    = number of colours (2-16)
+                IX   = X resolution
+                IY   = Y resolution
+Destroyed:      -
+Description:    Returns the current screen mode, colour depth and resolution.
+-------------------------------------------------------------------------------
+Address:        #813C (MOSGET)
+Name:           Device_MousePosition
+How to call:    rst #20:dw #813C
+Input:          -
+Output:         DE   = X position
+                HL   = Y position
+Destroyed:      -
+Description:    Returns the current position of the mouse pointer.
+-------------------------------------------------------------------------------
+Address:        #813F (MOSKEY)
+Name:           Device_MouseKeyStatus
+How to call:    rst #20:dw #813F
+Input:          -
+Output:         A    = Key Status
+                       Bit 0 = 1 -> left mouse button is pressed
+                       Bit 1 = 1 -> right mouse button is pressed
+                       Bit 2 = 1 -> middle mouse button is pressed
+Destroyed:      F
+Description:    Returns the current status of the mouse keys.
+-------------------------------------------------------------------------------
+Address:        #8145 (KEYTST)
+Name:           Device_KeyTest
+How to call:    ld hl,#8145:rst #28
+Input:          E    = Keyboard scan code
+Output:         E    = Key status
+                       0 = key is currently not pressed
+                       1 = key is currently pressed
+Destroyed:      AF,BC,D,HL,IX,IY
+Description:    Returns the current status of a key. For the scan codes see
+                KEYBOARD SCAN CODES.
+-------------------------------------------------------------------------------
+Address:        #8160 (KEYMUL)
+Name:           Device_KeyMulti
+How to call:    ld hl,#8160:rst #28
+Input:          E    = Keyboard scan code for key 1
+                IXL  = Keyboard scan code for key 2
+                IXH  = Keyboard scan code for key 3
+                IYL  = Keyboard scan code for key 4
+                IYH  = Keyboard scan code for key 5
+                D    = Keyboard scan code for key 6
+Output:         E  = [Bit0] key 1 status (1=pressed)
+                     [Bit1] key 2 status (1=pressed)
+                     [Bit2] key 3 status (1=pressed)
+                     [Bit3] key 4 status (1=pressed)
+                     [Bit4] key 5 status (1=pressed)
+                     [Bit5] key 6 status (1=pressed)
+Destroyed:      AF,BC,D,HL,IX,IY
+Description:    Returns the current status of six different keys.
+                Use this function if you want to scan several keys at once
+                (e.g. in a game), as it will decrease the amount of first ram
+                bank calls and so save some CPU time. Don't use it, if you only
+                need to scan 3 or less keys, otherwise it will take longer
+                compared to single key tests.
+                For the scan codes see KEYBOARD SCAN CODES.
+-------------------------------------------------------------------------------
+Address:        #8148 (KEYSTA)
+Name:           Device_KeyStatus
+How to call:    ld hl,#8148:rst #28
+Input:          -
+Output:         E  = [Bit0] Shift     (1=pressed)
+                     [Bit1] Control   (1=pressed)
+                     [Bit2] Alt       (1=pressed)
+                D  = Caps lock status (1=locked)
+Destroyed:      AF,BC,HL,IX,IY
+Description:    Returns the status of the shift/control/alt/capslock keys.
+-------------------------------------------------------------------------------
+Address:        #814B (KEYPUT)
+Name:           Device_KeyPut
+How to call:    rst #20:dw #814b
+Input:          A  = Char (ASCII code)
+Output:         CF = Status (1=keyboard buffer full)
+Destroyed:      AF,BC,HL
+Description:    Puts a char back into the keyboard buffer.
+-------------------------------------------------------------------------------
+Address:        #8157 (IOMINP) [CPC only]
+Name:           Device_IO_MultiIn
+How to call:    rst #20:dw #8157
+Input:          DE = destination address
+                IY = [Bit12-15] destination bank (0-15)
+                     [Bit0-11]  length
+                IX = port address
+Destroyed:      AF,BC,DE,HL
+Description:    Reads multiple bytes from a hardware port in a very fast way
+                and writes them to a destination address in memory. This
+                function can be used to implement drivers for additional
+                hardware, which transfers larger amount of data to any
+                application.
+                This function is only available in SymbOS CPC due to its
+                limited banking abilities.
+-------------------------------------------------------------------------------
+Address:        #815A (IOMOUT) [CPC only]
+Name:           Device_IO_MultiOut
+How to call:    rst #20:dw #8157
+Input:          DE = source address
+                IY = [Bit12-15] source bank (0-15)
+                     [Bit0-11]  length
+                IX = port address
+Destroyed:      AF,BC,DE,HL
+Description:    Writes multiple bytes to a hardware port in a very fast way
+                from a source address in memory. See also IOMINP.
+                This function is only available in SymbOS CPC due to its
+                limited banking abilities.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+EXTENDED ASCII CODES
+-------------------------------------------------------------------------------
+001 = Ctrl + A          140 = F0                176 = Alt + Y
+002 = Ctrl + B          141 = F1                177 = Alt + Z
+003 = Ctrl + C          142 = F2                178 = Alt + 0
+004 = Ctrl + D          143 = F3                179 = Alt + 1
+005 = Ctrl + E          144 = F4                180 = Alt + 2
+006 = Ctrl + F          145 = F5                181 = Alt + 3
+007 = Ctrl + G          146 = F6                182 = Alt + 4
+008 = Ctrl + H          147 = F7                183 = Alt + 5
+009 = Ctrl + I          148 = F8                184 = Alt + 6
+010 = Ctrl + J          149 = F9                185 = Alt + 7
+011 = Ctrl + K          150 = F.                186 = Alt + 8
+012 = Ctrl + L          151 = Alt + @           187 = Alt + 9
+013 = Ctrl + M          152 = Alt + A
+014 = Ctrl + N          153 = Alt + B           192 = Ctrl + 1
+015 = Ctrl + O          154 = Alt + C           193 = Ctrl + 2
+016 = Ctrl + P          155 = Alt + D           194 = Ctrl + 3
+017 = Ctrl + Q          156 = Alt + E           195 = Ctrl + 4
+018 = Ctrl + R          157 = Alt + F           196 = Ctrl + 5
+019 = Ctrl + S          158 = Alt + G           197 = Ctrl + 6
+020 = Ctrl + T          159 = Alt + H           198 = Ctrl + 7
+021 = Ctrl + U          160 = Alt + I           199 = Ctrl + 8
+022 = Ctrl + V          161 = Alt + J
+023 = Ctrl + W          162 = Alt + K           008 = Backspace
+024 = Ctrl + X          163 = Alt + L           013 = Return
+025 = Ctrl + Y          164 = Alt + M           127 = CLR
+026 = Ctrl + Z          165 = Alt + N
+027 = Ctrl + [          166 = Alt + O
+028 = Ctrl + \          167 = Alt + P
+029 = Ctrl + ]          168 = Alt + Q
+030 = Ctrl + 9          169 = Alt + R
+031 = Ctrl + 0          170 = Alt + S
+                        171 = Alt + T
+136 = cursor up         172 = Alt + U           #d0 = Alt + : (Ins)
+137 = cursor down       173 = Alt + V           #f0 = Alt + / (Prt -> Shot)
+138 = cursor left       174 = Alt + W           #fe = Alt + , (Hom -> DocBeg)
+139 = cursor right      175 = Alt + X           #ff = Alt + . (End -> DocEnd)
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+INTERNAL ASCII CODES (NOT AVAILABLE FOR APPLICATIONS)
+-------------------------------------------------------------------------------
+128 = Ctrl + Alt + Clr      enter SymbOS security
+129 = Alt + Tab             open task switcher with next window selected
+130 = Alt + Esc             switch to next window directly
+131 = Alt + F4              close current window
+132 = Ctrl + Esc            open startmenu
+133 = Ctrl + Shift + Esc    open Task Manager
+134 = Mouse double click
+135 = Alt + Shift + Tab     open task switcher with previous window selected
+188 = Mouse left click
+189 = Mouse left release
+190 = Mouse right click
+191 = Mouse right release
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+KEYBOARD SCAN CODES
+The scan code are used in the "Device_KeyTest" function. Please note, that they
+are equal on all supported platforms.
+-------------------------------------------------------------------------------
+00 = Cursor Up      20 = F4             40 = 8              60 = S
+01 = Cursor Right   21 = Shift          41 = 7              61 = D
+02 = Cursor Down    22 = \              42 = U              62 = C
+03 = F9             23 = Control        43 = Y              63 = X
+04 = F6             24 = ^              44 = H              64 = 1
+05 = F3             25 = -              45 = J              65 = 2
+06 = Enter          26 = @              46 = N              66 = Esc
+07 = F.             27 = P              47 = Space          67 = Q
+08 = Cursor Left    28 = ;              48 = 6              68 = Tab
+09 = Alt            29 = :              49 = 5              69 = A
+10 = F7             30 = /              50 = R              70 = Capslock
+11 = F8             31 = .              51 = T              71 = Z
+12 = F5             32 = 0              52 = G              72 = Joystick Up
+13 = F1             33 = 9              53 = F              73 = Joystick Down
+14 = F2             34 = O              54 = B              74 = Joystick Left
+15 = F0             35 = I              55 = V              75 = Joystick Right
+16 = Clr            36 = L              56 = 4              76 = Fire 2
+17 = [              37 = K              57 = 3              77 = Fire 1
+18 = Return         38 = M              58 = E              78 = [not used]
+19 = ]              39 = ,              59 = W              79 = Del
+-------------------------------------------------------------------------------

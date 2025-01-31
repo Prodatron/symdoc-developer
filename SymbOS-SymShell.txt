@@ -1,0 +1,357 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / SymbiosiS
+Date:   15.04.2024
+===============================================================================
+
+S Y M S H E L L   T E X T   T E R M I N A L
+
+The SymShell system application provides a program environment with a text
+based user interface. Applications, which are working inside the SymShell
+environment, can use terminal input and output routines for sending and
+receiving text data to and from the standard console or another redirected
+source and destination.
+SymShell commands are triggered via a message, which has to be sent with RST
+#10 (MSGSND) to the SymShell process. SymShell will pass its process ID and the
+text screen resolution to the application via the command line.
+
+
+===============================================================================
+SYMSHELL COMMAND LINE INFORMATION
+
+Library:    SyShell_PARALL
+            SyShell_PARSHL
+
+SymShell passes three information via the command line, when the application
+has been started inside SymShell.
+
+A command line usually looks like this:
+
+[drive:/path/filename.com] (user parameter list)
+
+The 256 byte string is always placed behind the last byte of the code memory
+area of a loaded application (see the "applications" chapter). SymShell appends
+an additional parameter, when executing an application:
+
+[drive:/path/filename.com] (user parameter list) %spPPXXYYVV
+
+As you can see the SymShell-based application has to search for a paameter,
+which always starts with "%sp". If there is no option like this, the
+application probably hasn't be started inside SymShell and should quit itself
+at once, as it can't use the text terminal features. If such an option can be
+found, it contains a few information. All three numbers are in ASCII format and
+represent 2 decimal digits for each value:
+PP -> number of the SymShell process. This is important, as the application
+      has to know the number of the process, to which it has to send the
+      commands for text input and output.
+XX -> width of the text terminal window in chars.
+YY -> height of the text terminal window in chars. These two infos maybe used
+      for text output reformatting.
+VV -> SymShell version; first digit is the major, second is the minor version
+
+Example:
+c:\symbos\symshell\quizgame %level:9 %sp07602021
+The application "quizgame.com" will be executed in path "c:\symbos\symshell\".
+The user passed the parameter "%level:9" to it. The version of SymShell is 2.1,
+it runs with process ID 7, and the text terminal window has a size of 60x20
+chars.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+SYMSHELL COMMANDS AND RESPONSES
+-------------------------------------------------------------------------------
+ID:             064 (MSC_SHL_CHRINP)
+Name:           SymShell_CharInput_Command
+Library:        SyShell_CHRINP
+Message:        00  1B  064
+                01  1B  channel (0=Standard, 1=Keyboard)
+Description:    Requests a char from an input source. The input source can be
+                the standard channel or the console keyboard. Usually the
+                standard channel is the console keyboard, too, but it can also
+                be a textfile or another source, if redirection or piping is
+                active.
+                If the keyboard is used, SymShell waits for the user and won't
+                send a response as long as no key is pressed.
+Response:       See MSR_SHL_CHRINP
+-------------------------------------------------------------------------------
+ID:             192 (MSR_SHL_CHRINP)
+Name:           SymShell_CharInput_Response
+Message:        00  1B  192
+                01  1B  EOF flag (<>0 -> EOF reached, no char available!)
+                02  1B  char
+                03  1B  error state
+                        254 = unknown process (SymShell doesn't know the
+                              process, which sent the command, so it won't
+                              provide any service)
+                        253 = destination device full
+                        252 = internal ring buffer full
+                        251 = too many processes (SymShell can't handle the
+                              amount of processes running at the same time in
+                              its text terminal environment)
+                        Any other: See "Error Codes" in chapter "File Manager"
+Description:    If a char could be received from the keyboard, a file or
+                another source, it will be sent to the application via this
+                response message. If the user pressed Control+C or if the end
+                of the file (EOF) has been reached, the EOF flag will be set.
+-------------------------------------------------------------------------------
+ID:             065 (MSC_SHL_STRINP)
+Name:           SymShell_StringInput_Command
+Library:        SyShell_STRINP
+Message:        00  1B  065
+                01  1B  channel (0=Standard, 1=Keyboard)
+                02  1B  destination buffer ram bank (0-15)
+                03  1W  destination buffer address
+Description:    Requests a string from an input source. The input source can be
+                the standard channel or the console keyboard. Usually the
+                standard channel is the console keyboard, too, but it can also
+                be a textfile or another source, if redirection or piping is
+                active.
+                The maximum lenght of a string is 255 chars, so the buffer must
+                have a size of 256 bytes (255 + terminator). A string is always
+                terminated by 0.
+                If the keyboard is used, SymShell waits until the user typed in
+                a text line and pressed the Return key.
+Response:       See MSR_SHL_STRINP
+-------------------------------------------------------------------------------
+ID:             193 (MSR_SHL_STRINP)
+Name:           SymShell_StringInput_Response
+Message:        00  1B  193
+                01  1B  EOF flag (<>0 -> EOF reached, no string available!)
+                03  1B  error state (see above "SymShell_CharInput_Response")
+Description:    If a text line could be received from the keyboard, a file or
+                another source (terminated by 13/10), it will be sent to the
+                application via this response message. If the user pressed
+                Control+C or if the end of the file (EOF) has been reached, the
+                EOF flag will be set.
+-------------------------------------------------------------------------------
+ID:             066 (MSC_SHL_CHROUT)
+Name:           SymShell_CharOutput_Command
+Library:        SyShell_CHROUT
+Message:        00  1B  066
+                01  1B  channel (0=Standard, 1=Screen)
+                02  1B  char
+Description:    Sends a char to the output destination. The output destination
+                can be the standard channel or the console text screen. Usually
+                the standard channel is the console text screen, too, but it
+                can also be a textfile or another destination, if redirection
+                or piping is active.
+Response:       See MSR_SHL_CHROUT
+-------------------------------------------------------------------------------
+ID:             194 (MSR_SHL_CHROUT)
+Name:           SymShell_CharOutput_Response
+Message:        00  1B  194
+                03  1B  error state (see above "SymShell_CharInput_Response")
+Description:    Informs the application, if the char has be sended correctly.
+                An application shouldn't send more than one char at the same
+                time, before such a response has been received.
+-------------------------------------------------------------------------------
+ID:             067 (MSC_SHL_STROUT)
+Name:           SymShell_StringOutput_Command
+Library:        SyShell_STROUT
+Message:        00  1B  067
+                01  1B  channel (0=Standard, 1=Screen)
+                02  1B  string ram bank (0-15)
+                03  1W  string address
+                05  1B  string length (without 0-terminator)
+Description:    Sends a string to the output destination. The output
+                destination can be the standard channel or the console text
+                screen. Usually the standard channel is the console text
+                screen, too, but it can also be a textfile or another
+                destination, if redirection or piping is active.
+                A string has always to be terminated by 0. The lenght, which
+                has to be specified, must not include the 0-terminator.
+Response:       See MSR_SHL_STROUT
+-------------------------------------------------------------------------------
+ID:             195 (MSR_SHL_STROUT)
+Name:           SymShell_StringOutput_Response
+Message:        00  1B  195
+                03  1B  error state (see above "SymShell_CharInput_Response")
+Description:    Informs the application, if the string has be sended correctly.
+                An application shouldn't send more than one string at the same
+                time, before such a response has been received.
+-------------------------------------------------------------------------------
+ID:             068 (MSC_SHL_EXIT)
+Name:           SymShell_Exit_Command
+Library:        SyShell_EXIT
+Message:        00  1B  068
+                01  1B  exit type
+                        0 = application quits itself
+                        1 = application releases focus and goes into blur mode
+Description:    The application informs SymShell about an exit event.
+                If an application quits itself, SymShell has to be informed
+                about that, so that it can remove the application from its
+                internal management table. In this case the exit type has to be
+                0 ("quit").
+                If an application doesn't require the focus inside the text
+                terminal anymore, it has to send exit type 1 ("blur"). The
+                background is, that SymShell can run multiple applications in
+                the same text terminal at the same time. User text inputs will
+                only be sent to the application which has been started at first
+                until it releases the focus and goes into blur mode. In this
+                case the next application or the command line interpreter of
+                the shell itself will receive the focus (the user can force the
+                shell to get back focus at once by appending "&" at the end of
+                the command line).
+Response:       [SymShell does not send a response message]
+-------------------------------------------------------------------------------
+ID:             069 (MSC_SHL_PTHADD)
+Name:           SymShell_PathAdd_Command
+Library:        SyShell_PTHADD
+Message:        00  1B  069
+                01  1W  address of base path (0=actual shell path)
+                03  1W  address of additional path component
+                05  1W  address of new full path (256 byte buffer required)
+                07  1B  pathes ram bank (0-15)
+Description:    Adds a path component to a base path. The base path can be the
+                current one, where the application has been started from, or
+                another defined path. It should not end with a "/".
+                The added path component can even start at the root directory
+                or is consisting of a complete stand-alone path.
+                Examples:
+                base: "c:\symbos\apps", add: "..\music\mp3\lalala.mp3"
+                   -> "c:\symbos\music\mp3\lalala.mp3"
+                base: "a:\graphics\nature", add: "\symbos"
+                   -> "a:\symbos"
+                base: "c:\archive", add: "*.zip"
+                   -> "c:\archive\*.zip"
+                base: "a:\archive", add: "c:\symbos"
+                   -> "c:\symbos"
+                Both strings have to be 0-terminated as usual.
+Response:       See MSR_SHL_PTHADD
+-------------------------------------------------------------------------------
+ID:             197 (MSR_SHL_PTHADD)
+Name:           SymShell_PathAdd_Response
+Message:        00  1B  197
+                01  1W  position behind last char in new path
+                03  1W  position behind last / in new path
+                05  1B  Bit[0]=1 -> new path ends with /
+                        Bit[1]=1 -> new path contains wildcards
+Description:    After building the new path in the specified 256 byte buffer
+                SymShell will return some useful information about the new
+                path. You will receive the position of the 0-terminator as well
+                as the position of the last "/" in the path. It may also be
+                usefull to know, if the file at the end of the path contains
+                wildcards ("*" and "?" chars).
+-------------------------------------------------------------------------------
+ID:             070 (MSC_SHL_CHRTST)
+Name:           SymShell_CharTest_Command
+Library:        SyShell_CHRTST
+Message:        00  1B  070
+                01  1B  channel (0=Standard, 1=Keyboard)
+                02  1B  lookahead (0=if available return char but leave it in
+                        buffer, 1=return char and remove it from buffer)
+Description:    Tests if a char from an input source is available.
+                **Currently only the console keyboard is supported.**
+                If a char is available it will be returned and removed from or
+                left in the buffer depending on the lookahead flag.
+Response:       See MSR_SHL_CHRINP
+-------------------------------------------------------------------------------
+ID:             198 (MSR_SHL_CHRTST)
+Name:           SymShell_CharTest_Response
+Message:        00  1B  198
+                01  1B  char state (0=nothing available, 1=EOF reached,
+                                    2=char available)
+                02  1B  next char
+                03  1B  error state
+                        254 = unknown process (SymShell doesn't know the
+                              process, which sent the command, so it won't
+                              provide any service)
+                        Any other: See "Error Codes" in chapter "File Manager"
+Description:    Returns the result of the char test command immediately. If the
+                user pressed Control+C EOF will be returned.
+                An available char will be returned in any case and depending on
+                the lookahead flag it will be removed from the buffer or not.
+-------------------------------------------------------------------------------
+ID:             071 (MSC_SHL_CHRWTC)
+Name:           SymShell_CharWatch_Command
+Library:        SyShell_CHRWTC
+Message:        00  1B  071
+                01  1B  mode (0=stop watching, 1=start watching)
+                02  1B  watch byte ram bank (0-15)
+                03  1W  watch byte address
+Description:    Adds or removes a console char watch byte; as soon as there is
+                a new char available from the console its code will be written
+                to the watch byte; if there is no char available, 0 will be
+                written.
+                Don't forget to remove the watch byte before quitting the
+                application.
+Response:       See MSR_SHL_CHRINP
+-------------------------------------------------------------------------------
+ID:             199 (MSR_SHL_CHRWTC)
+Name:           SymShell_CharWatch_Response
+Message:        00  1B  199
+                03  1B  error state
+                        254 = unknown process (SymShell doesn't know the
+                              process, which sent the command, so it won't
+                              provide any service)
+                        252 = too many watch bytes
+Description:    Returns the result of the watch byte command immediately.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+SYMSHELL TEXT TERMINAL CONTROL CODES
+-------------------------------------------------------------------------------
+The text terminal control codes are partially CPC-OS compatible. There are
+additional codes for enabling a wide range of additional terminal emulations.
+Please note, that the cursor position is 1-based, so the first line and the
+first column have the coordinates 1/1. Codes 01, 07, 15 and 27 are not yet
+defined and will be ignored.
+-------------------------------------------------------------------------------
+Code    Description                                             Parameters
+-------------------------------------------------------------------------------
+  00    Stop textoutput and ignore remaining part of the    -
+        line
+  01    -                                                   -
+  02    Switch cursor off. This will make the cursor        -
+        invisible
+  03    Switch cursor on                                    -
+  04    Save current cursor position                        -
+  05    Restore last saved cursor position                  -
+  06    Activate textoutput (see also 21)                   -
+  07    -                                                   -
+  08    Move cursor one char to the left                    -
+  09    Move cursor one char to the right                   -
+  10    Move cursor one char downwards                      -
+  11    Move cursor one char upwards                        -
+  12    Clear screen and place cursor at position 1/1       -
+  13    Move cursor to the beginning of the current line    -
+  14    Move cursor by multiple chars. If P1 is between...  P1 = direction
+          1 -  80 -> cursor will move 1 - 80 chars to the        and steps
+                     right
+         81 - 160 -> cursor will move 1 - 80 chars to the
+                     left (parameter-80)
+        161 - 185 -> cursor will move 1 - 25 chars
+                     downwards (parameter-160)
+        186 - 210 -> cursor will move 1 - 25 chars upwards
+                     (parameter-185)
+        The cursor will not cross any borders.
+  15    -                                                   -
+  16    Clear char at cursor position (using space [32])    -
+  17    Clear line from cursor left                         -
+  18    Clear line from cursor right                        -
+  19    Clear screen from cursor up                         -
+  20    Clear screen from cursor down                       -
+  21    Deactivate textoutput. No more chars will be        -
+        printed until a code 06 appears.
+  22    Set a tab at the current column                     -
+  23    Clear a tab at the current column                   -
+  24    Clear all tabs                                      -
+  25    Jump to next tab                                    -
+  26    Fill screen area with a specified char              P1 = char
+        [*THIS CONTROL CODE IS NOT IMPLEMENTED YET*]        P2 = x start
+                                                            P3 = y start
+                                                            P4 = x end
+                                                            P5 = y end
+  27    -                                                   -
+  28    Set terminal window size. The minimum size is 10x4, P1 = width
+        the maximum size is 80x25 (MSX: 80x24). After the   P2 = height
+        window has been resized, the screen will be
+        cleared and the cursor placed in the upper left
+        corner (1/1).
+  29    Scroll window up or down one line. This will not    P1 = direction
+        influence the current cursor position.              (1=up, 2=down)
+  30    Move cursor to the upper left corner (1/1)          -
+  31    Move cursor to a specified screen location          P1 = x pos (1-80)
+                                                            P2 = y pos (1-25)
+-------------------------------------------------------------------------------

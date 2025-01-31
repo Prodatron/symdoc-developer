@@ -1,0 +1,92 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Date: 31.12.2023
+===============================================================================
+
+
+S Y M B O S   M E M O R Y   M A P   ( Z N X )
+ZX Spectrum Next
+
+
+A.) General Memory Usage
+
+The following diagram shows, in which way the different memory banks and blocks
+are used in SymbOS.
+
+      Bank 0                Bank 1                Bank n
+FFFF  +-----------------+   +-----------------+   +-----------------+
+      |                 |   | SystemData      |   |                 |
+      |                 |   |                 |   |                 |
+      | (unused)        |   | free            |   | free            |
+      |                 |   |                 |   |                 |
+      |                 |   |                 |   |                 |
+C000  +-----------------+   +-----------------+   +-----------------+
+      | Buffers         |   |                 |   |                 |
+      | SubRoutines     |   |                 |   |                 |
+      | FileManager-LL  |   | free            |   | free            |
+      |                 |   |                 |   |                 |
+      | ScreenManager   |   |                 |   |                 |
+8000  +-----------------+   +-----------------+   +-----------------+
+      |                 |   | free            |   |                 |
+      |                 |   |                 |   |                 |
+      | DesktopManager  |   | SystemData      |   | free            |
+      |                 |   | DesktopManagerEx|   |                 |
+      |                 |   | SystemManagerEx |   |                 |
+4000  +-----------------+   +-----------------+   +-----------------+
+      | DesktopManager  |   |                 |   |                 |
+      | SystemManager   |   |                 |   |                 |
+      | DeviceManager   |   | FileManager-HL  |   | free            |
+      | Kernel          |   |                 |   |                 |
+      | KernelJumps     |   | KernelJumps     |   | KernelJumps     |
+0000  +-----------------+   +-----------------+   +-----------------+
+
+===============================================================================
+
+
+B.) Application Memory Usage
+
+The memory inside an application RAM bank (1-n) is used in the following way:
+1.) 0000-03FF   Kernel jumps, Kernel multitasking and banking routines
+2.) 0400-FFFF   Application code and internal application data
+3.) 0400-3FFF,  Application data used by the screen manager
+    4000-7FFF,  (one object has to be inside one 16K block)
+    8000-BFFF,
+    C000-FEFF
+4.) C000-FEFF   Application "transfer" data, used by the desktop manager,
+                message buffer, stack
+5.) FF00-FFFF   Interbank-Call jump routines
+
+===============================================================================
+
+
+C.) Memory Configurations
+
+The following diagram shows, how the memory is configured during the activity
+of one of the modules of SymbOS.
+
+      DesktopManager (C1)   ScreenManager(C4-7)   FileManager-HL (C4)   FileManager-LL(C4-C7) Application    (C2)
+FFFF  +=================+   +-----------------+   +-----------------+   +-----------------+   +=================+
+      | Bank n, Block 3 |   | Bank 0, Block 3 |   | Bank 0, Block 3 |   | Bank 0, Block 3 |   | Bank n, Block 3 |
+      | Transfer RAM    |   |                 |   |                 |   |                 |   | Trnf, Code, Data|
+C000  +=================+   +-----------------+   +-----------------+   +-----------------+   +-----------------+
+      | Bank 0, Block 2 |   | Bank 0, Block 2 |   | Bank 0, Block 2 |   | Bank 0, Block 2 |   | Bank n, Block 2 |
+      |                 |   | ScreenManager   |   |                 |   | FileManager-LL  |   | Code, Data      |
+8000  +-----------------+   +=================+   +-----------------+   +=================+   +-----------------+
+      | Bank 0, Block 1 |   | Bank n, Block m |   | Bank 1, Block 0 |   | Bank n, Block m |   | Bank n, Block 1 |
+      | DesktopManager  |   | Data RAM        |   | FileManager-HL  |   | Data RAM        |   | Code, Data      |
+4000  +-----------------+   +=================+   +-----------------+   +=================+   +-----------------+
+      | Bank 0, Block 0 |   | Bank 0, Block 0 |   | Bank 0, Block 0 |   | Bank 0, Block 0 |   | Bank n, Block 0 |
+      |                 |   |                 |   |                 |   |                 |   | Code, Data      |
+0000  +-----------------+   +-----------------+   +-----------------+   +-----------------+   +=================+
+
+===============================================================================
+
+
+D.) Spectrum Next Real Memory Usage
+
+Block 00-04/Page 000-009 ->  80K VRAM
+Block 05   /Page 010-011 ->  16K [blocked/Spectrum specific]
+Block 06   /Page 012-013 ->  16K *free*
+Block 07   /Page 014-015 ->  16K [blocked/Spectrum specific]
+Block 08-11/Page 016-023 ->  64K Bank 0
+Block 12-47/Page 024-095 -> 576K Bank 1- 9 (next 1mb),  640K total
+Block 12-71/Page 024-143 -> 960K Bank 1-15 (next 2mb), 1024K total

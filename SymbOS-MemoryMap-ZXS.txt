@@ -1,0 +1,51 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Date: 25.07.2016
+===============================================================================
+
+
+S Y M B O S   M E M O R Y   M A P   ( Z X S + 2 A / + 3 )
+
+
+A.) Memory Usage
+
+The following diagram shows, in which way the different memory banks and blocks
+are used in SymbOS.
+
+      Bank 0-1-2-3 (00)     Bank 4-5-6-3 (10)     Bank 4-7-6-3 (11)
+FFFF  +-----------------+   +-----------------+   +-----------------+
+      | SystemStacks    |   | SystemStacks    |   | SystemStacks    |
+      | KernelData      |   | KernelData      |   | KernelData      |
+     3| Applications    |  3| Applications    |  3| Applications    |
+      |   (code, data,  |   |   (code, data,  |   |   (code, data,  |
+      |   transfer)     |   |   transfer)     |   |   transfer)     |
+C000  +-----------------+   +-----------------+   +-----------------+
+      |                 |   |                 |   |                 |
+      | SysManagerExt   |   | free            |   | free            |
+     2| DskManagerExt   |  6|   (code, data)  |  6|   (code, data)  |
+      | SystemTransfer  |   |                 |   |                 |
+      |                 |   |                 |   |                 |
+8000  +-----------------+   +-----------------+   +-----------------+
+      |                 |   |                 |   |                 |
+      |                 |   | ScreenManager   |   |                 |
+     1| DesktopManager  |  5|                 |  7| FileManager-HL  |
+      |                 |   |                 |   |                 |
+      |                 |   | VideoRAM        |   |                 |
+4000  +-----------------+   +-----------------+   +-----------------+
+      | DesktopManager  |   | FileManager-LL  |   | FileManager-LL  |
+      | DeviceManager   |   | SystemData      |   | SystemData      |
+     0| SubRoutines     |  4| SystemManager   |  4| SystemManager   |
+      | Buffers         |   | Kernel          |   | Kernel          |
+      | KernelJumps/Mirr|   | KernelJumps     |   | KernelJumps     |
+0000  +-----------------+   +-----------------+   +-----------------+
+
+===============================================================================
+ZX Spectrum +2A/+3 Memory Mapping
+
+Address     Mode %00    Mode %01    Mode %10    Mode %11
+            CPC  #C2    CPC  #C0    CPC  #C1    CPC  #C3
+                        (not used)
+C000        Bank 3      Bank 7(S2)  Bank 3      Bank 3
+8000        Bank 2      Bank 6      Bank 6      Bank 6
+4000        Bank 1      Bank 5(S1)  Bank 5(S1)  Bank 7(S2)
+0000        Bank 0      Bank 4      Bank 4      Bank 4
+===============================================================================

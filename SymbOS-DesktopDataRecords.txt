@@ -1,0 +1,1017 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / Symbiosis
+Date:   07.01.2025
+===============================================================================
+
+D E S K T O P   M A N A G E R   D A T A   R E C O R D S
+
+
+WINDOWS
+
+===============================================================================
+WINDOW DATA RECORD
+-------------------------------------------------------------------------------
+00  1B  Status (0=closed, 1=normal, 2=maximized, 3=minimized, +128=open window
+               centered [will be always reset after opening])
+01  1B  [bit0]=display 8x8 pixel application icon (in the upper left edge)
+        [bit1]=window is resizeable
+        [bit2]=display close button
+        [bit3]=display tool bar (below the menu bar)
+        [bit4]=display title bar
+        [bit5]=display menu bar (below the title bar)
+        [bit6]=display status bar (at the lower side of the window)
+        [bit7]=*used internally* (set to 0)
+02  1B  [bit0]=adjust x size of the window content to the x size of the window
+        [bit1]=adjust y size of the window content to the y size of the window
+        [bit2]=window will not be displayed in the task bar
+        [bit3]=Window is not moveable
+        [bit4]=Window is a modal window: other windows, who point on it (see
+               byte 51), can't get the focus position
+        [bit5]=*reserved* (set to 0)
+        [bit6]=*used internally* (set to 0)
+        [bit7]=*used internally* (set to 0)
+03  1B  Process ID of the windows owner
+04  2W  x/y position, if window is not maximized
+08  2W  x/y size, if window is not maximized
+        The minimum size is 32 for X and 24 for Y. The maximum size is 16383
+        for both X and Y
+12  2W  x/y offset of the displayed window content
+16  2W  full x/y length of the total window content
+20  2W  minimal possible x/y size of the window
+24  2W  maximal possible x/y size of the window
+28  1W  address of the application icon (graphic object)
+30  1W  address of the title line text (terminated by 0)
+32  1W  address of the status line text (terminated by 0)
+34  1W  address of the MENU DATA RECORD
+36  1W  address of the CONTROL GROUP DATA RECORD of the window content
+38  1W  address of the CONTROL GROUP DATA RECORD of the tool bar content
+40  1B  height of the tool bar
+41  1B  *reserved* (set to 0)
+42  9B  [*used during runtime, so it has to be reserved*]
+51  1B  0 or number of modal window + 1 (will be set to 0 again, if modal
+        window has been closed)
+52 140B [*used during runtime, so it has to be reserved*]
+-------------------------------------------------------------------------------
+
+===============================================================================
+CONTROL GROUP DATA RECORD
+-------------------------------------------------------------------------------
+00  1B  number of controls (has to be >=1; notice that you have to fill the
+        background of the form by yourself, too!)
+01  1B  Process ID of the control group owner
+02  1W  address of the CONTROL DATA RECORDS
+04  1W  address of the position/size CALCULATION RULE DATA RECORD (0 means, no
+        re-calculation)
+06  2B  [*not used, set to 0*]
+08  1B  object to click, when user hits return (1-255, 0=not defined; works
+        only for window content, not for the toolbar)
+09  1B  object to click, when user hits escape (1-255, 0=not defined; works
+        only for window content, not for the toolbar)
+10  4B  [*reserved, set to 0*]
+14  1B  focus object (1-255, 0=no focus on any object; only for window content)
+15  1B  [*not used, set to 0*]
+-------------------------------------------------------------------------------
+
+===============================================================================
+CONTROL DATA RECORDS
+-------------------------------------------------------------------------------
+[Number of controls] * [
+00  1W  control ID/value; this will be sent to the application, if the user
+        clicks or modifies the control. As an example you could store the
+        address of a sub routine here, which you call, if the user clicks the
+        control.
+02  1B  CONTROL TYPE; for the type IDs see below. The IDs are between 0 and
+        63. IDs > 63 will be ignored, so you can set bit 6 and/or 7 to 1, if
+        you want to hide an object, and reset it to 0 if you want to show it
+        again.
+03  1B  bank number, where the extended control data record is located (0-15);
+        -1 means, that the control is placed in the same bank like the window
+        data record, so normally you can use -1 here)
+04  1W  either a parameter to specify the control properties or, if one word is
+        not enough, a pointer to the extended control data record; this depends
+        on the control, so see the control description for information, what to
+        write here.
+06  2W  x/y position of the control (related to the upper left edge of the
+        content or tool bar); if the window is using a CALCULATION RULE
+        DATA RECORD, you can write 0 here
+10  2W  x/y size of the control (related to the upper left edge of the content
+        or tool bar); if the window is using a CALCULATION RULE DATA RECORD,
+        you can write 0 here
+14  2B  [*ignored, can be used freely by the application*]
+]
+-------------------------------------------------------------------------------
+
+===============================================================================
+CALCULATION RULE DATA RECORD
+-------------------------------------------------------------------------------
+Inside a window you can either place the controls at fixed positions using
+fixed sizes or in a dynamic way, where positions and sizes may be dependant on
+the width and/or the height of the window. As soon as your window is resizeable
+you should always use the second variant. In this case CONTROL GROUP DATA
+RECORD has to point to a CALCULATION RULE DATA RECORD (word at offset 4). This
+means, that X/Y positions and sizes inside a CONTROL DATA RECORDS will be
+ignored but calculated with the following rules.
+
+00  1W  x position static part   (signed)
+02  1B  window x size multiplier (unsigned)
+03  1B  window x size divider    (unsigned)
+04  1W  y position static part   (signed)
+06  1B  window y size multiplier (unsigned)
+07  1B  window y size divider    (unsigned)
+08  1W  x size static part       (signed)
+10  1B  window x size multiplier (unsigned)
+12  1B  window x size divider    (unsigned)
+13  1W  y size static part       (signed)
+14  1B  window y size multiplier (unsigned)
+15  1B  window y size divider    (unsigned)
+
+Description:
+If "recalculation" for a control group is activated every coordinate and size
+value of a control will be recalculated, if the user changes the size of the
+window.
+The calculation is:
+position or size = static_part + window_size * multiplier / divider
+
+Example:
+You want to place three buttons at the lower end of a window. Buttons should
+all have the same x-size and use the full width of the window, with a spacing
+of 2 pixels between each button and the window border. The y-size should always
+be 12 pixels.
+
+Button 1:
+    Xpos=2+Wxsz*0/3, Ypos=-14+Wysz*1/1, Xsiz=-8+Wxsz*1/3, Ysiz=12+Wysz*0/1
+
+Button 2:
+    Xpos=4+Wxsz*1/3, Ypos=-14+Wysz*1/1, Xsiz=-8+Wxsz*1/3, Ysiz=12+Wysz*0/1
+
+Button 3:
+    Xpos=6+Wxsz*2/3, Ypos=-14+Wysz*1/1, Xsiz=-8+Wxsz*1/3, Ysiz=12+Wysz*0/1
+
+All buttons have an Y size of 12 (the Y size of the window is multiplied by 0,
+so just ignored) and a Y position of the Y size of the window multiplied by 1/1
+minus 14, so they are placed 14 pixels from the end of the window, meaning you
+have a distance of 2 to the end.
+
+The X sizes are all the X size of the window divided by 4 minus 8, meaning they
+use a third of the window width minus the required spacing between buttons and
+window edges. The X positions start with 2 for the first button, 4+window X
+size multiplied by 1/3 for the second and 6+window X size multiplied by 2/3 for
+the third. This means that the buttons are evenly aligned across the entire
+window width.
+-------------------------------------------------------------------------------
+
+
+
+CONTROL TYPES
+
+===============================================================================
+PAINT
+-------------------------------------------------------------------------------
+ID:             00 (PLF)
+Name:           paint_area
+Parameter:      [bit0-3]=pen
+                [bit7]  =colour mode (0 = 4 colour mode indexed,
+                                      1 = 16 colour mode)
+                - if 16 colour mode:
+                [bit6]  =XOR mode
+Data record:    -
+Size:           not limited
+Description:    Fills an area with a specified colour.
+-------------------------------------------------------------------------------
+ID:             01 (PLT)
+Name:           paint_text
+Parameter:      pointer to data record
+Data record:    00  1W  text address (terminated by 0)
+                03  1B  [bit0-1]=alignment (0=left, 1=right, 2=center)
+                        [bit5]  =if 1, don't prepare background (MSX only)
+                        [bit7]  =colour mode (0 = 4 colour mode indexed,
+                                              1 = 16 colour mode)
+                - if 4 colour mode:
+                02  1B  [bit0-1]=paper, [bit2-3]=pen,
+                        [bit7]  =if 1, fill backgr.
+                - if 16 colour mode:
+                02  1B  [bit0-3]=paper, [bit4-7]=pen
+                03  1B  [bit6]  =if 1, fill backgr.
+Size:           width is not limited, height must be equal like the height of
+                the current font; if the text is larger than the control width,
+                it will only be cut, if the "fill background" option is
+                activated
+Description:    Plots a text with the standard system font with 4 or 16 colours
+                for background and foreground. If "fill background" is
+                activated first the whole area of the control will be filled
+                with the paper-colour, and the text will be clipped to the
+                defined area. Otherwise it would exceed the area, if it's too
+                long.
+                Bit5 of byte3 can be used to increase the performance on the
+                MSX platform. If the background has already been filled with
+                the paper colour before, you can set this bit to speed up the
+                text output.
+-------------------------------------------------------------------------------
+ID:             02 (PLR)
+Name:           paint_frame
+Parameter:      [bit7]    =colour mode (0 = 4 colour mode indexed,
+                                        1 = 16 colour mode)
+                [bit6]    =if 1, fill area inside frame
+                - if 4 colour mode:
+                [bit4-5]  =pen of area inside frame (only used, if bit6=1)
+                [bit0-1]  =pen of upper and left line
+                [bit2-3]  =pen of lower and right line
+                - if 16 colour mode:
+                [bit5]    =XOR mode
+                  - if no XOR mode
+                [bit0-3]  =pen of area inside frame (only used, if bit6=1)
+                [bit8-11] =pen of upper and left line
+                [bit12-15]=pen of lower and right line
+                  - if XOR mode (only available in 16 colour mode)
+                [bit0-3]  =pen dotted lines
+                [bit4]    =dot offset
+Data record:    -
+Size:           equal or greater than 3x3
+Description:    Plots a frame. Optionally the area inside will be filled.
+-------------------------------------------------------------------------------
+ID:             03 (PLX)
+Name:           paint_frame_with_title
+Parameter:      pointer to data record
+Data record:    00  1W  text address (terminated by 0)
+                02  1B  [bit7]  =colour mode (0 = 4 colour mode indexed,
+                                 1 = 16 colour mode)
+                - if 4 colour mode:
+                02  1B  [bit0-1]=indexed paper of text
+                        [bit2-3]=indexed pen of text and line
+                - if 16 colour mode:
+                02  1B  [bit0-3]=pen of line
+                03  1B  [bit0-3]=paper of text
+                        [bit4-7]=pen of text
+Size:           equal or greater than 16x16
+Description:    Plots a frame with a text title. Notice, that the lines have a
+                distance of 3 pixels to the border of the control. The area
+                inside the frame will not be filled.
+-------------------------------------------------------------------------------
+ID:             04 (PLP)
+Name:           paint_progress
+Parameter:      [bit0-1]=indexed colour of upper and left line
+                [bit2-3]=indexed colour of lower and right line
+                [bit4-5]=indexed colour of filled area inside frame
+                [bit6-7]=indexed colour of empty area inside frame
+                [bit8-15]=progress (0=0%, 255=100%)
+Data record:    -
+Size:           equal or greater than 3x3
+Description:    Plots a progress bar. The second byte of the parameter
+                specifies the progress in 1/255 steps.
+-------------------------------------------------------------------------------
+ID:             05 (PLA)
+Name:           paint_text_with_alternative_font
+Parameter:      pointer to data record
+Data record:    00  1W  text address (terminated by 0)
+                02  1B  [bit0-1]=paper, [bit2-3]=pen (if 4 colour mode)
+                        [bit0-3]=paper, [bit4-7]=pen (if 16 colour mode)
+                03  1B  [bit0-1]=alignment (0=left, 1=right, 2=center)
+                        [bit6]  =if 1, fill backgr.
+                        [bit7]  =colour mode (0 = 4 colour mode indexed,
+                                              1 = 16 colour mode)
+                04  1W  font address
+Size:           width is not limited, height must be equal like the height of
+                the current font; if the text is larger than the control width,
+                it will only be cut, if the "fill background" option is
+                activated
+Description:    Plots a text with an self specified alternative font. The font
+                must be placed in the same 16K area and ram bank like the text.
+                For the description how a font is stored in the memory see
+                below (FONTS).
+                If "fill background" is activated first the whole area of the
+                control will be filled with the paper-colour.
+-------------------------------------------------------------------------------
+ID:             06 (PLC)
+Name:           paint_text_with_control_codes
+Parameter:      pointer to data record
+Data record:    00  1W  text address (terminated by 0)
+                02  1W  maximum number of bytes (control codes included)
+                04  1W  font address (-1=Standard)
+                06  1B  [bit0-3]=paper, [bit4-7]=pen
+                07  1B  [bit0]  =if 1, underlined
+Size:           not limited
+Description:    Plots a text, which can include control codes (0-31). The
+                following control codes are currently accepted:
+                00 - end of text
+                01 - set text colour
+                     Parameters: 1B - bit0-3=paper, bit4-7=pen
+                02 - set font
+                     Parameters: 1W - font address; must be placed in the same
+                                      16K area and ram bank like the text; if
+                                      the address is -1, the standard font will
+                                      be used
+                03 - switch underline mode on
+                04 - switch underline mode off
+                05 - insert additional space between the current and the next
+                     char
+                     Parameters: 1B - amount of pixels
+                06 - plot inline graphic with extended header
+                     Parameters: 1B - y difference+128, bitmap will be
+                                      displayed at current xpos,ypos+(ydif-128)
+                                 1B - bitmap bank (1-15; -1=same like textdata)
+                                 1W - bitmap header address+1
+                07 - *undefined* (will be ignored)
+                08 to 11 - skip next bytes ((code-8)*2+1 bytes)
+                12 to 31 - insert additional space between the current and the
+                     next char (code-8 pixels)
+-------------------------------------------------------------------------------
+ID:             07 (PLG)
+Name:           paint_grid
+Parameter:      pointer to data record
+Data record:    00  1B  [bit0-3] line colour, [bit7]=0 horizontal, 1 vertical
+                01  1B  number of lines
+                02  xB  [bit1-7] spacing to next line (>=1, 0=same position)
+                        [bit0]   flag, if same spacing for all following lines
+Size:           not limited
+Description:    Plots a number of horizontal or vertical lines in the defined
+                area. The first line is placed at offset 0,0 in the area. If
+                bit 0 of the spacing byte of the current line is set, all
+                following lines will have the same distance, and no more
+                spacing bytes are required.
+                By combining two controls with both line types you can plot a
+                grid of nearly any size.
+-------------------------------------------------------------------------------
+
+===============================================================================
+GRAPHICS
+-------------------------------------------------------------------------------
+ID:             08 (ICN)
+Name:           graphic_simple
+Parameter:      graphic address
+Data record:    -
+Size:           same as the graphic object
+Description:    Plots a graphic. For the description how a graphic object is
+                stored in the memory see below (GRAPHICS, "Standard graphics").
+                The control must have the same size like the graphic.
+-------------------------------------------------------------------------------
+ID:             09 (ICT)
+Name:           graphic_with_text
+Parameter:      pointer to data record
+Data record:    00  1W  graphic address (standard graphic) or
+                        address of the graphic header (extended graphic)
+                02  1W  0 or address of text for line 1 (terminated by 0)
+                04  1W  0 or address of text for line 2 (terminated by 0)
+                06  1B  [bit4]=graphic mode (0 = standard, 1 = extended)
+                        [bit5]=text colour mode (0 = 4 colours indexed,
+                                                 1 = 16 colours)
+                        [bit6]=flag, if extended options
+                        [bit7]=flag, if icon can be moved by the user
+                - if 4 colour text mode:
+                06  1B  [bit0-1]=paper, [bit2-3]=pen
+                - if 16 colour text mode:
+                07  1B  [bit0-3]=paper, [bit4-7]=pen
+                - if extended options:
+                08  1B  [bit0]=flag, if this icon can be marked
+                        [bit1]=flag, if this icon is marked
+Size:           48x40
+Description:    Plots a graphic with one or two textlines below. It is used for
+                displaying icons. When there is a 0 instead of a text address,
+                the line will stay empty. The graphic itself must have a size
+                of 24x24.
+-------------------------------------------------------------------------------
+ID:             10 (ICX)
+Name:           graphic_extended
+Parameter:      address of the graphic header
+Data record:    -
+Size:           same as the graphic object
+Description:    Plots a graphic with an extended header. For the description
+                how a graphic object is stored in the memory see below
+                (GRAPHICS, "Graphics with extended header"). The control must
+                have the same size like the graphic.
+-------------------------------------------------------------------------------
+ID:             11 (ICY)
+Name:           graphic_transparent
+Parameter:      address of the graphic header
+Data record:    -
+Size:           same as the graphic object
+Description:    Plots a graphic with an extended header with colour 0 beeing
+                transparent. For the description how a graphic object is stored
+                in the memory see below (GRAPHICS, "Graphics with extended
+                header"). The control must have the same size like the graphic.
+-------------------------------------------------------------------------------
+
+===============================================================================
+BUTTONS
+-------------------------------------------------------------------------------
+ID:             16 (BTN)
+Name:           button_simple
+Parameter:      text address (terminated by 0)
+Data record:    -
+Size:           width is not limited, height must always be 12
+Description:    Plots a button with a centered text inside. Indexed colour 2 is
+                used for the background, indexed colour 1 for text colour and
+                right/lower lines, indexed colour 3 for left/upper lines.
+-------------------------------------------------------------------------------
+ID:             17 (BTC)
+Name:           button_check
+Parameter:      pointer to data record
+Data record:    00  1W  address of status byte (this byte can be 0 or 1)
+                02  1W  text address (terminated by 0)
+                04  1B  [bit0-1]=indexed text paper, [bit2-3]=indexed text pen
+Size:           width is not limited, height must always be 8
+Description:    Plots a check box followed by a textline. The status byte
+                contains 1, if the box is checked, otherwise it contains 0.
+-------------------------------------------------------------------------------
+ID:             18 (BTR)
+Name:           button_radio
+Parameter:      pointer to data record
+Data record:    00  1W  address of global status byte
+                02  1W  text address (terminated by 0)
+                04  1B  [bit0-1]=indexed text paper, [bit2-3]=indexed text pen
+                05  1B  value of the own status
+                06  1W  pointer to a global 4byte coordinate buffer
+Size:           width is not limited, height must always be 8
+Description:    Plots a radio button followed by a textline. If the global
+                status byte has the same value as the own status, this radio
+                button is checked. The 4byte coordinate buffer has to contain
+                -1,-1,-1,-1 at the beginning. It stores the coordinates of the
+                current checked radio button.
+                Radio buttons, which are connected to each other, have to point
+                to the same global status byte and the same coordinate buffer.
+-------------------------------------------------------------------------------
+ID:             19 (BTP)
+Name:           button_hidden
+Parameter:      00  1B  [bit0]=flag, if user can mark an area
+                        [bit1]=flag, if icons of this window will be selected
+                               or unselected when using the marking function
+Data record:    -
+Size:           not limited
+Description:    This defines an area on which the user can click. Nothing will
+                be displayed. If marking is enabled, the user will be able to
+                select an area with the option to select all icons within this
+                area.
+-------------------------------------------------------------------------------
+ID:             20 (BTT)
+Name:           button_tabs
+Parameter:      pointer to data record
+Data record:    00  1B  number of tabs
+                01  1B  [bit0-1]=indexed paper, [bit2-3]=indexed pen,
+                        [bit4-5]=indexed colour of left/upper lines,
+                        [bit6-7]=indexed colour of right/lower lines
+                02  1B  selected tab
+                03  1W  text address of tab 1 title (terminated by 0)
+                05  1B  -1 or width of tab 1 title
+                06  1W  text address of tab 2 title (terminated by 0)
+                08  1B  -1 or width of tab 2 title
+                ...
+                ??  1W text address of tab n title
+                ??  1B -1 or width of tab n title
+Size:           width is not limited, height must always be 11
+Description:    Plots a tab line. If -1 is set as the width of one tab title
+                the system will calculate the needed width by itself and
+                overwrites the -1 with the correct value. As soon as the text
+                of a tab is changed the application has to set the value to -1
+                again.
+-------------------------------------------------------------------------------
+
+===============================================================================
+MISCELLANEOUS
+-------------------------------------------------------------------------------
+ID:             24 (SLD)
+Name:           slider_simple
+Parameter:      pointer to data record
+Data record:    00  1B  [bit0]=alignment (0=vertical, 1=horizontal)
+                        [bit1]=type (0=value control, 1=window section control)
+                        [bit7]=[*reserved for internal use, set to 0*]
+                01  1B  [*not used, set to 0*]
+                02  1W  current value/position
+                04  1W  maximum value/position (range is 0 - maximum)
+                06  1B  value increase, if the user clicks the down/left button
+                07  1B  value decrease, if the user clicks the up/right button
+Size:           depending on the alignment, one component most have a minimum
+                of 24 pixels; the other one must be always 8.
+Description:    Plots a slider. It can be used to control a value or to move
+                inside a window or list.
+-------------------------------------------------------------------------------
+ID:             25 (SUP)
+Name:           control_collection
+Parameter:      pointer to data record
+Data record:    00  1W  pointer to sub control group data record
+                02  1W  full width of the control collection area
+                04  1W  full height of the control collection area
+                06  1W  current X offset
+                08  1W  current Y offset
+                10  1B  [bit0]=flag, if X slider should be displayed
+                        [bit1]=flag, if Y slider should be displayed
+                        [bit2]=flag, if ignore commands
+                        [bit3]=flag, if ignore tab/return/esc/up/down keys
+                11  1B  [*reserved, set to 0*]
+                12  2B  message buffer for additional control commands
+Size:           if sliders are activated, the size must be more than 32x32;
+                there are no other limitations.
+Description:    Plots a collection of sub controls. A control collection
+                behaves like a sub content inside the content of a windows.
+                This sub content can even have a larger size than displayed, so
+                that you can optionally have scroll bars. The data record of
+                this control collection has the same format like described at
+                CONTROL GROUP DATA RECORD.
+                Please note, that a control collection can't contain a control
+                collection again.
+Commands:       The textinput box control provides additional functions, which
+                can be accessed by sending special keyboard codes to the
+                control. This is done by using the KEYPUT function (see Device
+                Manager documentation) while the control has focus position. If
+                a command requires additional parameters, they have to be
+                stored at byte 12 in the data record before sending the code.
+                The following commands are available:
+                code 30     set new X offset; the visible area will be scrolled
+                            to the new position
+                            Input:  (buffer+0)=new X offset
+                code 31     set new Y offset; the visible area will be scrolled
+                            to the new position
+                            Input:  (buffer+0)=new Y offset
+-------------------------------------------------------------------------------
+
+===============================================================================
+TEXTINPUT
+-------------------------------------------------------------------------------
+ID:             32 (TXL)
+Name:           textinput_line
+Parameter:      pointer to data record
+Data record:    00  1W  address of text (has to be large enough, see below;
+                        text has to be placed anywhere inside a 16K aligned
+                        data area)
+                02  1W  first displayed character
+                04  1W  cursor position
+                06  1W  number of selected characters (0=no selection, <0
+                        cursor is placed at the end of the selection, >0 cursor
+                        is placed at the beginning of the selection)
+                08  1W  length of the current text
+                10  1W  possible maximum text length (doesn't include the 0
+                        terminator at the end of the text)
+                12  1B  [bit0]=Flag, if Password (all chars will be displayed
+                               as '*')
+                        [bit1]=text is read only
+                        [bit2]=use alternative colours
+                        [bit7]=will be set to 1, if text has been modified
+                - if usage of alternative colours:
+                13  1B  [bit0-3]=text paper
+                        [bit4-7]=text pen
+                14  1B  [bit0-3]=pen of upper and left line
+                        [bit4-7]=pen of lower and right line
+Size:           width is not limited, height must always be 12
+Description:    Plots a textinput line. The user can use several key functions
+                for editing the text (see below) as well as a context menu,
+                which opens on right mouseclick. If the user modified the text,
+                bit7 of byte 12 of the data record will be set to 1.
+Key functions:  SHFT+LEFT/RIGHT (de)select parts of the text
+                CTRL+LEFT/RIGHT jump word wise left/right
+                CTRL+UP/DOWN    jump to line begin/end
+                CTRL+A          select the complete text
+                CTRL+C          copy selected text
+                CTRL+X          cut selected text (copy and delete)
+                CTRL+V          paste copied text
+-------------------------------------------------------------------------------
+ID:             33 (TXB)
+Name:           textinput_box
+Parameter:      pointer to data record
+Data record:    00  1W  address of text (has to be large enough, see below:
+                        text has to be placed anywhere inside a 16K aligned
+                        data area)
+                02  1W  [*not used*]
+                04  1W  cursor position (inside the complete text)
+                06  1W  number of selected characters (0=no selection, <0
+                        cursor is placed at the end of the selection, >0 cursor
+                        is placed at the beginning of the selection)
+                08  1W  length of the current text
+                10  1W  possible maximum text length (doesn't include the 0
+                        terminator at the end of the text)
+                12  1B  [bit1]=text is read only
+                        [bit2]=use alternative colours (see 13)
+                        [bit3]=use alternative font (see 15)
+                        [bit4]=use alternative keyboard mapping (see 46)
+                        [bit7]=will be set to 1, if text has been modified
+                13  1B  [bit0-3]=text paper, [bit4-7]=text pen
+                        (only when using alternative colours)
+                14  1B  [*not used*]
+                15  1W  font address (only when using alternative font)
+                17  1B  [*reserved, set to 0*]
+                18  1W  current number of lines
+                20  1W  maximum pixel width of one line for word wrapping
+                        (-1=unlimited)
+                22  1W  maximum number of lines; 
+                24  1W  [*used internally: x size of visible area*]
+                        (-8=force reformatting)
+                26  1W  [*used internally: y size of visible area*]
+                28  1W  address of this data record
+                30  1W  [*used internally: total x size*]
+                32  1W  [*used internally: total y size*]
+                34  1W  [*used internally: x offset of visible area*]
+                36  1W  [*used internally: y offset of visible area*]
+                38  1B  [bit0]=word wrapping (0=at window border, 1=at maximum
+                               pixel position, see byte20)
+                        [bit1]=1 (has to be set always)
+                39  1B  tab stop width (1-255; 0=no tab stop)
+                40  4B  message buffer for additional control commands
+                44  2B  [*reserved, set to 0*]
+                46  2B  address of keyboard mapping table (95 entries for
+                        32-126); must be placed in same ram bank
+                48  [maximum number of lines]W
+                        line length table; this table contains a word for each
+                        line with the length in chars; that may also include
+                        potential carriage return/line feed (CR+LF) codes at
+                        the end of a line; bit15 is set, if a line contains the
+                        CR+LF codes
+Description:    Plots a textinput box. The user can use several key functions
+                for editing the text (see below) as well as a context menu,
+                which opens on right mouseclick. If the user modified the text,
+                bit7 of byte 12 of the data record will be set to 1. The data
+                record contains several internal used variables which shouldn't
+                be modified by the application. At startup all internal used
+                variables must be set to 0.
+Key functions:  SHFT+LEFT/RIGHT (de)select parts of the text
+                CTRL+LEFT/RIGHT jump word wise left/right
+                CTRL+UP/DOWN    jump page wise up/down
+                CTRL+A          select the complete text
+                CTRL+C          copy selected text
+                CTRL+X          cut selected text (copy and delete)
+                CTRL+V          paste copied text
+Commands:       The textinput box control provides additional functions, which
+                can be accessed by sending special keyboard codes to the
+                control. This is done by using the KEYPUT function (see Device
+                Manager documentation) while the control has focus position. If
+                a command requires additional parameters, they have to be
+                stored at byte 40 in the data record before sending the code.
+                Here you will also find the results, if the command returns 
+                The following commands are available:
+                code 29     get cursor position; this command returns the
+                            current cursor position
+                            Output: (buffer+0)=column (starting at 0)
+                                    (buffer+2)=line (starting at 0)
+                code 30     text has been modified; this command forces the
+                            control to reformat and update the text
+                code 31     set cursor position and text selection; the visible
+                            area of the textinput box will be scrolled to the
+                            new position, if necessary
+                            Input:  (buffer+0)=new cursor position
+                                    (buffer+2)=new number of selected chars
+-------------------------------------------------------------------------------
+
+===============================================================================
+LISTS
+-------------------------------------------------------------------------------
+ID:             40 (LST)
+Name:           list_title
+Parameter:      pointer to data record
+Data record:    [see ID 43]
+Size:           width is not limited, height must always be 10
+Description:    Plots the title line of a list.
+                See "list_complete" (ID 43) for all details.
+-------------------------------------------------------------------------------
+ID:             41 (LSI)
+Name:           list_content
+Parameter:      pointer to data record
+Data record:    [see ID 43]
+Size:           width must be equal or larger than 11, height must be equal or
+                larger than 16
+Description:    Plots the list itself without the title.
+                See "list_complete" (ID 43) for all details.
+-------------------------------------------------------------------------------
+ID:             42 (LSP)
+Name:           list_dropdown
+Parameter:      pointer to data record
+Data record:    [see ID 43]
+                Differences for this control type
+                12  1W  last clicked line
+                        -> this always represents the selected line!
+                14  1B  [bit0]=flag, if list slider will be displayed
+                        -> should be set to 1, if list has more than 10 entries
+                        [bit1]=flag, if multiselections are possible
+                        -> always set to 0!
+Size:           width must be equal or larger than 11, height must always be 10
+Description:    Plots a dropdown list. Only one line of the list will be
+                displayed. If the user clicks on this control, the complete
+                list will drop down and the user can choose one of the entries.
+                See "list_complete" (ID 43) for all details.
+-------------------------------------------------------------------------------
+ID:             43 (LSC)
+Name:           list_complete
+Parameter:      pointer to data record
+Data record:    00  1W  number of lines
+                02  1W  first displayed line of the list
+                04  1W  pointer to data record for the list content
+                06  2B  [*not used, set to 0*]
+                08  1B  number of columns (1-32)
+                09  1B  [bit0-4]=index of sorted column
+                        [bit5]=always set to 0 (type=list)
+                        [bit6]=sort list on start
+                        [bit7]=sort order (0=ascending, 1=descending)
+                10  1W  pointer to data record for the columns
+                12  1W  last clicked line
+                14  1B  [bit0]=flag, if list slider will be displayed
+                        [bit1]=flag, if multiselections are possible
+                15  1B  will be set to 1, if the user re-sorted the list
+Column record:  [Number of columns] * [
+                00  1B  [bit0-1]=alignment (0=left, 1=right, 2=center,
+                                            3=text with control codes
+                                            [only for type 0])
+                        [bit2-4]=type (0=text, 1=graphic extended, 2=16bit
+                                       number, 3=32bit number, 4=tree
+                                       [not allowed for lists, see ID 44])
+                01  1B  first char to compare for sorting (normally 0); when
+                        sorting a text column, you can skip leading cell chars
+                02  1W  width of this column in pixel
+                04  1W  text address of the title (terminated by 0)
+                06  2B  [*not used, set to 0*]
+                ]
+List record:    [Number of lines] * [
+                    1W  [bit0-11] =value of this line (0-4095)
+                        [bit12]   =always set to 0 (used for tree controls)
+                        [bit13]   =colour of the first row (1=alternative)
+                        [bit14]   =set to 0 (internally used for "selection
+                                   update")
+                        [bit15]   =flag, if this line is marked
+                    [Number of columns] *
+                        1W  address of text/data or value (if type is 16bit
+                            number) for this cell
+                ]
+Size:           width must be equal or larger than 11, height must be equal or
+                larger than 26
+Description:    Plots the list title and the list itself together. This is the
+                combination of ID 40 and ID 41.
+                Cells can be left aligned, right aligned or centered (see P0,
+                bit 0-1 of column record). A fourth option is "text with
+                control codes", which will plot the text in the same way like
+                the "paint_text_with_control_codes" control (see ID 06).
+                For cells of type "text", "graphic extended", "32bit number"
+                a pointer to the text or data is stored in the list record.
+                For cells of type "16bit number" the value is the list record
+                entry itself.
+                If the user re-sorted the list by clicking on the list title
+                bar, byte 15 in the data record will be set to 1 and a click
+                event will be sent. The application can now react but should
+                also reset the byte to 0.
+-------------------------------------------------------------------------------
+ID:             44 (TRE)
+Name:           tree_content
+Parameter:      pointer to data record
+Data record:    [see ID 43]
+                Differences for this control type:
+                06  1W  any user event (click, keyboard) for this this control
+                        will update this status word; bit 15=1 means, that a
+                        fold action took place and is described here
+                        [bit0-11] =line of node
+                        [bit14]   =fold type (0=collapsed, 1=expanded)
+                        [bit15]   =fold action happend (1)
+                09  1B  always set to 32 (type=tree, no sorting)
+                14  1B  always set to 0 or 1 (no multiselection, slider is
+                        optional)
+                16  1W  number of visible lines
+                18  1W  first displayed line in visible lines
+Column record:  [see ID 43]
+                Differences for this control type
+                - the first columen always has to have type "tree" (4) and must
+                  be left aligned or "text with control codes"; so the first
+                  byte must be 16 (=4*4+0, tree, left aligned) or 19 (=4*4+3,
+                  tree, text with control codes)
+                - it is not allowed to use type "tree" for any following
+                  columns
+List record:    [Number of lines] * [
+                    1W  [bit0-7]  =indenting (0-255)
+                        [bit8]    =flag, if node (1) or leaf (0)
+                        [bit9]    =flag, if child lines are expanded (1)
+                        [bit10-11]=reserved, set to 0
+                        [bit12]   =flag, if line is hidden (1=hidden)
+                        [bit13]   =colour of the first row (1=alternative)
+                        [bit14]   =set to 0 (internally used for "selection
+                                   update")
+                        [bit15]   =flag, if this line is marked
+                    [Number of columns] *
+                        1W  text/data address or value for this cell
+                    1W  value of this line (0-4095)
+                ]
+Size:           width must be equal or larger than 11, height must be equal or
+                larger than 16
+Description:    Plots a tree list.
+                A tree list is similar to a list, but the rows are organized as
+                a tree structure, so that parts of the tree may be collapsed or
+                expanded. Therefore, the visible part of the tree list may be
+                smaller than the complete tree list.
+                A tree list consists of nodes and leaves. A node always
+                contains further child leaves or nodes, while leaves have no
+                further child elements. Collapsing a node causes all child
+                elements to be hidden, so they are no longer displayed.
+                Each element has an indentation value (bit 0-7) that is 1
+                greater than that of the direct parent node. The topmost nodes
+                all have an indentation value of 0.
+                The first word of each line in the list record must be
+                initialized with the correct values. Indentation values must be
+                correct, and all collapsed lines (parent node has bit 9=0) must
+                have a set hidden flag (bit 12=1).
+                In contrast to the list record of a list, the list record of a
+                tree list have an additional word at the end of each line,
+                which is used for the value of the respective line, since the
+                first word already contains the tree information.
+                A tree list can also consist of several columns, but the first
+                column must always be of the tree type, while all other columns
+                must be of a different type.
+                Columns of type tree point either to a simple text or to a text
+                with control codes. In both cases, such a text must always
+                begin with a status character (followed by a space [32]):
+                127 - leaf
+                129 - collapsed node
+                130 - expanded node
+                This is later modified by the control itself depending on the
+                changed status.
+-------------------------------------------------------------------------------
+
+
+
+PULLDOWN AND CONTEXT MENUS
+
+===============================================================================
+MENU RECORD
+
+You can define up to 5 sub menu levels. The WINDOW DATA RECORD or a context
+menu points to the highest menu level. These are the entries you see in the
+menu bar of a window or at first on a context menu.
+These entries usually point to their sub menus, which contain entries, too,
+which are clickable or which point to an additional sub menu again.
+-------------------------------------------------------------------------------
+00  1W  Number of entries
+[Number of entries] * [
+00  1B  [bit0]=flag, if the menu entry is active. Deactivated entries can't be
+               clicked by the user and will appear in a different colour
+        [bit1]=flag, if there is a check mark behind the entry
+        [bit2]=flag, if the entry opens a sub menu
+        [bit3]=flag, if there is no entry but a separator line
+        [bit4]=flag, if text begins with an 8 pixel wide graphic with extended
+               header (not allowed in menu bars)
+        Options 1,3 are ignored in menu bars, option 4 is not allowed there
+01  1B  [*reserved, set to 0*]
+02  1W  text address (terminated by 0).
+        - if bit3 of the previous word is set, this word has to be 0
+        - if bit4 of the previous word is set, the text has to start with the
+          following 5 bytes:
+            1B 006
+            1B 128
+            1B bitmap ram bank (1-15; -1=actual bank)
+            1W bitmap header address+1 (extended header, see below)
+          This is followed by the actual text; the bitmap must have a width of
+          8 pixels, the height should not exceed 8 pixels
+04  1W  Value, if the entry is clickable, or address of the sub menu data
+        record, if bit2 of the first word is set.
+06  1W  [*reserved, set to 0*]
+]
+-------------------------------------------------------------------------------
+
+
+
+GRAPHICS
+
+===============================================================================
+
+1.) Standard graphics
+-------------------------------------------------------------------------------
+A SymbOS standard graphic has 4 colours and can have a maximum size of 255x255
+pixel. Each graphic object starts with a 3 byte header:
+00  1B  [bit0-6] Width of the graphic in bytes
+        [bit7]   Encoding type (0=CPC, 1=MSX; must be 0 first)
+01  1B  Width of the graphic in pixel
+02  1B  Height of the graphic in pixel
+Directly behind the header the amount of [Width_in_bytes] * [Height_in_pixel]
+bytes is following containing the graphic data. Every graphic is stored line by
+line like a sprite.
+
+The pixels have to be encoded in CPC format (Mode 1). Graphics on a MSX system
+will automatically be converted to the MSX format, when they are displayed for
+the first time. Bit7 of header byte0 contains the current encoding format.
+Please note, that it is not allowed to store an original graphic in MSX format,
+as a CPC/PCW/EP system is not able to handle such graphics!
+
+The following is a description of the CPC encoding format. Each byte contains
+4 pixels:
+bit7 = bit0 of pixel0 (left pixel)
+bit6 = bit0 of pixel1 (second..)
+bit5 = bit0 of pixel2 (third..)
+bit4 = bit0 of pixel3 (right pixel)
+bit3 = bit1 of pixel0 (left pixel)
+bit2 = bit1 of pixel1 (second..)
+bit1 = bit1 of pixel2 (third..)
+bit0 = bit1 of pixel3 (right pixel)
+
+Or you can see it like this:
+pixel0 = bit7 + 2 * bit3 (left pixel)
+pixel1 = bit6 + 2 * bit2
+pixel2 = bit5 + 2 * bit1
+pixel3 = bit4 + 2 * bit0 (right pixel)
+
+The MSX encoding format is like this (this information is only needed, if an
+application has to modify a graphic after it has been displayed the first
+time):
+pixel0 = bit7 * 2 + bit 6 (left pixel)
+pixel1 = bit5 * 2 + bit 4
+pixel2 = bit3 * 2 + bit 2
+pixel3 = bit1 * 2 + bit 0 (right pixel)
+
+Only applications, which have to modify a graphic after it has been displayed
+the first time, should take care about the encoding type and the MSX format.
+-------------------------------------------------------------------------------
+
+2.) Graphics with extended header
+-------------------------------------------------------------------------------
+As the width of a graphic is limited to 255 pixel, it wouldn't be possible to
+store a complete screen (like 320 x 200 in CPC Mode 1) in one piece. Such a
+screen needs to be splittet in two pieces (eg. 2 x 160 x 200), which makes it
+very difficult to write graphic modification routines.
+
+Extended graphics do not have this limitation and also allow more than 4
+colours. They can only be used for control ID 10, "graphic_extended". A graphic
+can be stored in one piece with a width of up to 1020 pixel. The control
+"graphic_extended" then is able to display a part of such a big linear stored
+graphic.
+
+The extended header is build like this:
+00  1B  Width of the complete graphic in bytes (this has to be an even value!)
+01  1B  Width of the graphic area, which should be displayed, in pixel
+02  1B  Height of the graphic area, which should be displayed, in pixel
+03  1W  Address of the graphic data, including the area offset
+05  1W  Address of the encoding information byte (see below);
+        Please note: This single byte has ALWAYS to be placed directly in front
+        of the complete graphic data!
+07  1W  Size of the complete graphic
+
+??  1B  encoding information
+        [bit0-1] = colour encoding (0 = CPC, 1 = MSX)
+        [bit2-3] = colour depth (0 = 4 colours, 1 = 16 colours)
+        Only the following two initial values are allowed:
+        0 -> 4 colours, CPC format; an MSX, ZNX or SVM system will convert the
+             graphic to MSX format, when it is displayed for the first time
+        5 -> 16 colours, MSX format; a CPC, PCW, EP or NC system will render
+             down the complete graphic to 4 colours (CPC format), when it is
+             displayed the fist time
+??+1 x  graphic data
+
+The following is a description of the MSX 16 colour format. Each byte contains
+two pixels:
+pixel0 (left pixel)  = high nibble (bit4-7)
+pixel1 (right pixel) = low  nibble (bit0-3)
+
+The graphic header doesn't need to be stored directly in front of the graphic,
+it just needs to be located in the same 16K data area like the graphic itself.
+You can use this type of graphic
+- if your graphic is larger than 255 pixel
+- if you only want to display a part of the graphic
+- if you don't want to store the header directly in front of the graphic
+- if you want to use 16 colour graphics
+
+In any other case you should use standard graphics, as they are a little bit
+faster.
+
+This is an example for a 320 x 200 graphic:
+
+encoding_type:  db 0                ;= 4 colour CPC format
+                                    ;** has to be placed directly in **
+                                    ;** front of the graphic data!   **
+graphic_data:   db x,x,x,x,x,x,...x ;line 1, includes 80 bytes = 320 pixel
+                db x,x,x,x,x,x,...x ;line 2
+                [...]
+                db x,x,x,x,x,x,...x ;line 200
+
+graphic_header_for_area_1:
+                db 80               ;80 * 4 = 320 pixel total
+                db 160              ;this area only has a width of 160 pixel
+                db 200              ;height is 200 pixel
+                dw graphic_data
+                dw encoding_type
+                dw 80*200
+
+graphic_header_for_area_2:
+                db 80               ;the same like above...
+                db 160
+                db 200
+                dw graphic_data+40  ;...but this area starts at byte offset 40
+                dw encoding_type
+                dw 80*200
+
+The graphic itself ("graphic_data") is stored in one piece in memory (without
+header). Then we have two headers ("graphic_header_for_area_1" and
+"graphic_header_for_area_2") which are pointing to two different areas of the
+big graphic. As you can see we still need two controls to display the graphic,
+but the data itself doesn't need to be splitted.
+-------------------------------------------------------------------------------
+
+
+
+FONTS
+
+===============================================================================
+A font defines the appearance of the characters used for printing texts in
+SymbOS.
+A font starts with a simple 2 byte header:
+00  1B  height of each character in pixel. This value can be between 1 and 15.
+        The usual value is 8.
+00  1B  first character in the font. This value can be between 0 and 255. To
+        save memory the usual value is 32 (="space", the first printable ASCII
+        char), as the first 32 chars normally won't be printed. Please note,
+        that the SymbOS system font always starts with 32 and consists of 98
+        chars (32-129).
+After the header the char definitions follow:
+00  1B  Width of the first char in pixel
+01  1B  Bit mask of the 1. pixel line of the first char
+02  1B  Bit mask of the 2. pixel line of the first char
+[...]
+15  1B  Bit mask of the 15. pixel line of the first char
+16  1B  Width of the second char in pixel
+17  1B  Bit mask of the 1. pixel line of the second char
+[...]
