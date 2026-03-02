@@ -887,7 +887,8 @@ which are clickable or which point to an additional sub menu again.
             1B 006
             1B 128
             1B bitmap ram bank (1-15; -1=actual bank)
-            1W bitmap header address+1 (extended header, see chapter "GRAPHICS")
+            1W bitmap header address+1 (extended header, see chapter
+               "GRAPHICS")
           the bitmap must have a width of 8 pixels, the height should not
           exceed 8 pixels, 7 is recommended
         - if bit5=0, this is followed by the actual text (terminated by 0).
