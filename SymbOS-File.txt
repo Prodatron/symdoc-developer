@@ -91,6 +91,7 @@ list of all possible error codes.
 032 - Device channel not available
 033 - Destination is not a directory
 034 - Destination is not a file
+035 - Unsupported command
 255 - Undefined Error
 -------------------------------------------------------------------------------
 
@@ -609,9 +610,11 @@ Data structure: 00  4B  File length (32bit double word)
                 ??  1B  0 terminator
                 [next entry]
 Description:    Reads the content of a directory. You can specify a name filter
-                by adding a file mask to the path (* and ? are allowed) and an
-                attribute filter. We recommend always to set Bit3 (volume ID)
-                of the attribute filter byte.
+                by adding a file mask to the path (* and ? are allowed). The
+                mask is only used for files, not for entries with the attribute
+                "directory" (Bit4). Attributes can be filtered as well. We
+                recommend always to set Bit3 (volume ID) of the attribute
+                filter byte.
                 The system skips the specified amount of entries first and
                 then loads as many entries as exist or as there is place in the
                 destination buffer. Please note, that the entries will not be

@@ -1,6 +1,6 @@
 S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
 Author: Prodatron / Symbiosis
-Date:   29.08.2014
+Date:   22.10.2025
 ===============================================================================
 
 K E R N E L
@@ -19,7 +19,8 @@ Kernel restarts can be accessed via the Z80 RST commands.
 -------------------------------------------------------------------------------
 Address:        RST #08 (MSGSLP)
 Name:           Message_Sleep_And_Receive
-Input:          IXL  = Receiver process ID (your own one)
+Input:          IXL  = Receiver process ID (usually your own one; -1 will
+                       automatically select the ID of the current process)
                 IXH  = Sender process ID or -1
                        -1 = check for message from any process
                        XX = check for message only from process XX
@@ -28,18 +29,22 @@ Output:         IXL  = Status (0 = no message available, 1 = message received)
                 IXH  = Sender process ID (if IXL=1)
 Destroyed:      AF,BC,DE,HL
 Description:    Checks for a new message from another process. If there is no
-                message, the process will be switched into sleep mode, until a
-                message is available. You still must check the IXL register, as
-                it is also possible, that the process has been wacked up
-                without getting a new message.
+                message, the process will be switched into sleep mode. That
+                means, that the process is not called anymore by the scheduler,
+                until a new message is available. It is marked as "sleep" in
+                the Task Manager.
                 Use this function, if you don't need to do any other things
-                than waiting for a new message, as it will save CPU time.
-                For more information about receiving message, see RST #18
-                (MSGGET).
+                than waiting for a new message, as it isn't using the CPU at
+                all during this time.
+                You still must check the IXL register, as it is also possible,
+                that the process has been wacked up without getting a new
+                message. For more information about receiving message, see RST
+                #18 (MSGGET).
 -------------------------------------------------------------------------------
 Address:        RST #10 (MSGSND)
 Name:           Message_Send
-Input:          IXL  = Sender process ID (your own one)
+Input:          IXL  = Sender process ID (usually your own one; -1 will
+                       automatically select the ID of the current process)
                 IXH  = Receiver process ID
                 IY   = Pointer to the message (1-14 bytes)
 Output:         IXL  = Status (1 = message has been sent successfully,
@@ -55,7 +60,8 @@ Description:    Sends a message to another process. IXL must contain your own
 -------------------------------------------------------------------------------
 Address:        RST #18 (MSGGET)
 Name:           Message_Receive
-Input:          IXL  = Receiver process ID (your own one)
+Input:          IXL  = Receiver process ID (usually your own one; -1 will
+                       automatically select the ID of the current process)
                 IXH  = Sender process ID or -1
                        -1 = check for message from any process
                        XX = check for message only from process XX
@@ -114,11 +120,13 @@ Name:           Multitasking_SoftInterrupt
 Input:          -
 Output:         -
 Destroyed:      -
-Description:    Releases the CPU time for the operating system. If the process
-                currently has nothing to do because it is waiting for
-                something, you should call this function, so that other
-                processes can get CPU time, too.
-                A process, which called this function, is marked as "idle".
+Description:    Returns the CPU time to the operating system until the end of
+                the current cycle. If the process doesn't need to do anything
+                for a while, specifically for 1/50th of a second, you should
+                call this function to allow other processes to receive CPU
+                time.
+                A process, which called this function, is marked as "idle" in
+                the Task Manager.
 -------------------------------------------------------------------------------
 Address:        RST #38 (MTHARD)
 Name:           Multitasking_HardInterrupt
@@ -361,9 +369,26 @@ Description:    The kernel sends this message after changing the priority of a
 -------------------------------------------------------------------------------
 
 ===============================================================================
-KERNEL FUNCTIONS (MEMORY MANAGEMENT)
+KERNEL FUNCTIONS (MULTITASKING MANAGEMENT)
 
 All kernel memory functions have to be called with RST #20 (BNKSCL) or RST #28
+(BNKFCL). This depends on the function, so have a look at "How to call" in the
+description.
+-------------------------------------------------------------------------------
+Address:        #816C (MTGPID)
+Name:           Multitasking_Get_ProcessID
+How to call:    ld hl,#816C:rst #28
+Input:          -
+Output:         E    = process ID
+Destroyed:      AF,BC,HL,IXL
+Description:    Returns the ID of the actual process.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+KERNEL FUNCTIONS (MEMORY MANAGEMENT)
+
+All kernel banking functions have to be called with RST #20 (BNKSCL) or RST #28
 (BNKFCL). This depends on the function, so have a look at "How to call" in the
 description. Many functions can only be called once at the same time, so they
 are protected with a semaphore mechanism. The calling process will be switched
@@ -379,26 +404,6 @@ Destroyed:      A,BC,IY
 Description:    Gives back the size of the total existing memory
                 (=D*65536+65536) and the amount of bytes (=E*65536+IX), which
                 are still available.
--------------------------------------------------------------------------------
-Address:        #8121 (MEMINF)
-Name:           Memory_Information
-How to call:    rst #20:dw #8121
-Input:          A    = Ram bank (1-15, 0 means search in any bank)
-                E    = Memory type
-                       0 = total (code area)
-                       1 = within a 16K block (data area)
-                       2 = within the last 16K block (transfer area)
-Output:         BC   = length of the largest free area
-                A,HL = total free memory in bytes
-Destroyed:      F,DE
-Description:    Searches for the largest free area inside a 64K bank. If you
-                don't specify the ram bank (A=0) the system is searching for
-                the largest area inside the whole memory.
-                For more information about the three memory types (code, data,
-                transfer) see the "applications" chapter.
-                This function is useful, if you want to reserve as much memory
-                in one piece as possible, but have no idea, how much it could
-                be.
 -------------------------------------------------------------------------------
 Address:        #8118 (MEMGET)
 Name:           Memory_Get
@@ -432,22 +437,6 @@ Description:    Frees the specified memory. Please note, that because of
                 performance and resources reasons the system will free it in
                 any way, so be sure, that you really free only the memory you
                 reserved by yourself.
--------------------------------------------------------------------------------
-Address:        #811E (MEMSIZ)
-Name:           Memory_Resize
-How to call:    rst #20:dw #811E
-Input:          A    = Ram bank (1-15)
-                HL   = Address
-                BC   = Old length in bytes
-                DE   = New length in bytes
-Output:         CF   = Error state (CF=1 -> not enough memory free)
-Destroyed:      AF,BC,DE,HL
-Description:    Changes the length of a reserved memory area. You will always
-                have success, if the new length is smaller than the old one.
-                If the user started already other applications, there is only
-                a little chance to be able to increase an existing memory area.
-                Because of the limitations of the Z80 cpu the system can't move
-                memory areas to another place after they have been occupied.
 -------------------------------------------------------------------------------
 
 ===============================================================================
@@ -497,6 +486,19 @@ Output:         HL   = Address+1
 Destroyed:      BC
 Description:    Writes a byte to an address in any ram bank.
 -------------------------------------------------------------------------------
+Address:        #8121 (BNKMBT)
+Name:           Banking_ModifyByte
+How to call:    rst #20:dw #8121
+Input:          A    = Ram bank (0-15)
+                HL   = Address
+                E    = AND value
+                D    = OR  value
+Output:         A    = Modified byte
+Destroyed:      F,B,HL
+Description:    Modifies a byte in any ram bank. A bitwise AND and a bitwise OR
+                operation is applied to the byte, then it is written back to
+                memory and also returned in A.
+-------------------------------------------------------------------------------
 Address:        #8130 (BNKCOP)
 Name:           Banking_Copy
 How to call:    rst #20:dw #8130
@@ -514,10 +516,10 @@ Description:    Copies a memory area from an address in any ram bank to any
 -------------------------------------------------------------------------------
 Address:        #8133 (BNKGET)
 Name:           Banking_GetBank
-How to call:    rst #20:dw #8133
+How to call:    ld hl,#8133:rst #28
 Input:          -
-Output:         A    = Ram bank (1-15)
-Destroyed:      F
+Output:         E    = Ram bank (1-15)
+Destroyed:      AF,BC,HL
 Description:    Gives back the number of the ram bank, where the process is
                 running.
 -------------------------------------------------------------------------------
@@ -617,13 +619,13 @@ Output:         IY,IX= System counter
 Destroyed:      -
 Description:    Gives back the system counter (=IY*65536+IX) and the counter of
                 the idle process.
-                The system counter is increased 50 times per second.
+                The system counter is increased 100 times per second.
                 The idle process increases its counter every 64 microsecond,
                 when it owns the CPU time.
                 With these two counters you can calculate the CPU usage in the
                 following way:
                 CPU_usage = 100% * (idle_counter_NEW - idle_counter_OLD) /
-                            ((system_counter_NEW - system_counter_OLD) * 312)
+                            ((system_counter_NEW - system_counter_OLD) * 156)
 -------------------------------------------------------------------------------
 Address:        #FF06 (BNKCPR)
 Name:           Banking_Decompress

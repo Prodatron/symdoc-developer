@@ -6,7 +6,7 @@
 ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ;Author     Prodatron / Symbiosis
-;Date       18.10.2021
+;Date       25.11.2025
 
 ;The system manager is responsible for starting and stopping applications and
 ;it also provides several dialogue services.
@@ -30,6 +30,7 @@
 ;use_SySystem_SYSWRN     equ 0   ;Opens an info, warning or confirm box
 ;use_SySystem_SELOPN     equ 0   ;Opens the file selection dialogue
 ;use_SySystem_HLPOPN     equ 0   ;Inits and opens the help file for this application
+;use_SySystem_LNGLOD     equ 0   ;Loads a text pack from a language file
 
 
 ;### MAIN FUNCTIONS ###########################################################
@@ -66,11 +67,7 @@ SySystem_PRGRUN
 ;***                error code.
 ;******************************************************************************
         ld c,MSC_SYS_PRGRUN
-        call SySystem_SendMessage
-SySPRn1 call SySystem_WaitMessage
-        cp MSR_SYS_PRGRUN
-        jr nz,SySPRn1
-        ld a,(App_MsgBuf+1)
+        call SySystem_WaitMessage
         ld hl,(App_MsgBuf+8)
         ret
     endif
@@ -170,11 +167,7 @@ SySystem_PRGSRV
 ;***                Developer Documentation.
 ;******************************************************************************
         ld c,MSC_SYS_PRGSRV
-        call SySystem_SendMessage
-SySPSr1 call SySystem_WaitMessage
-        cp MSR_SYS_PRGSRV
-        jr nz,SySPSr1
-        ld a,(App_MsgBuf+1)
+        call SySystem_WaitMessage
         ld hl,(App_MsgBuf+8)
         ret
     endif
@@ -248,34 +241,34 @@ SySystem_SYSWRN
 ;***                For more information about the SymbOS graphic format see the
 ;***                "desktop manager data records" chapter.
 ;******************************************************************************
-        ld (SySWrnW),de
+        ld (SySWrnW+2),de
         ld e,b
         ld c,MSC_SYS_SYSWRN
         push bc
         call SySystem_SendMessage
+        ld a,MSR_SYS_SYSWRN
+        ld (SySWMsN+1),a
         pop af
         and 7+64
         dec a
         ret z
-SySWrn1 call SySystem_WaitMessage
-        cp MSR_SYS_SYSWRN
-        jr nz,SySWrn1
-        ld ix,(SySWrnW)
-        db #dd:ld a,l
-        db #dd:or h
+SySWrn1 call SySWMs0
+        ld b,a
+SySWrnW ld ix,0
+        ld a,ixl
+        or ixh
         ld c,0
         jr z,SySWrn2
         ld (ix+51),c
         inc c
-SySWrn2 ld a,(App_MsgBuf+1)
-        cp 1
+SySWrn2 ld a,b
+        dec b
         ret nz
         dec c
         jr nz,SySWrn1
         ld a,(App_MsgBuf+2)
         ld (ix+51),a
         jr SySWrn1
-SySWrnW dw 0
     endif
 endif
 
@@ -343,25 +336,17 @@ SySystem_SELOPN
 ;***                (Amsdos supports a maximum amount of 64 entries) and to set the
 ;***                data buffer between 5000 and 10000.
 ;******************************************************************************
-        ld (SySSOpW+2),de
-        ld (App_MsgBuf+6),a
-        ld (App_MsgBuf+8),hl
-        ld (App_MsgBuf+10),ix
-        ld (App_MsgBuf+12),iy
-        ld iy,App_MsgBuf
-        ld (iy+7),c
+        ld (SySSOp1+2),de
+        call SySSMg1
         ld c,MSC_SYS_SELOPN
-        call SySystem_SendMessage
-SySSOp1 call SySystem_WaitMessage
-        cp MSR_SYS_SELOPN
-        jr nz,SySSOp1
-SySSOpW ld ix,0
+        call SySystem_WaitMessage
+SySSOp1 ld ix,0
         ld (ix+51),0
-        ld a,(App_MsgBuf+1)
         ld hl,(App_MsgBuf+2)
         cp -1
         ret nz
         ld (ix+51),l
+        call SySWMs0
         jr SySSOp1
     endif
 endif
@@ -444,6 +429,38 @@ SySystem_HLPOPN
     endif
 endif
 
+ifdef use_SySystem_LNGLOD
+    if use_SySystem_LNGLOD=1
+SySystem_LNGLOD
+;******************************************************************************
+;*** Name           Language_Load_Command
+;*** Input          P10 / IXL=application's default language ID
+;***                P11 / IXH=pack
+;***                P12 / IYL=version
+;***                P6  / A  =path bank
+;***                P4  / DE =path address
+;***                P7  / C  =text bank
+;***                P8  / HL =text address
+;*** Output         A  = Success status
+;***                     0 -> service not available
+;***                     1 -> OK, the required language package has either been
+;***                          loaded successfully, or the application's default
+;***                          language matches the required language
+;***                     2 -> disc error
+;***                     3 -> wrong version or pack number too high
+;***                     4 -> language not available
+;*** Destroyed      F,BC,DE,HL,IX,IY
+;*** Description    ...
+;******************************************************************************
+        call SySSMg1
+        ld a,(App_BnkNum)
+        ld iyh,a
+        ld c,MSC_SYS_EXTFNC
+        ld l,FNC_DXT_LNGLOD
+        jr SySystem_WaitMessage
+    endif
+endif
+
 
 ;### SUB ROUTINES #############################################################
 
@@ -455,15 +472,20 @@ SySystem_SendMessage
 ;*** Destroyed      AF,BC,DE,HL,IX,IY
 ;*** Description    Sends a message to the system manager
 ;******************************************************************************
+        ld (App_MsgBuf+3),a
+SysSMg0 ld (App_MsgBuf+1),hl
+        ld (App_MsgBuf+4),de
         ld iy,App_MsgBuf
         ld (iy+0),c
-        ld (App_MsgBuf+1),hl
-        ld (App_MsgBuf+3),a
-        ld (App_MsgBuf+4),de
-        db #dd:ld h,PRC_ID_SYSTEM
-        ld a,(App_PrcID)
-        db #dd:ld l,a
+        ld ix,(App_PrcID)
+        ld ixh,PRC_ID_SYSTEM
         rst #10
+        ret
+SySSMg1 ld (App_MsgBuf+6),a
+        ld (App_MsgBuf+7),bc
+        ld (App_MsgBuf+8),hl
+        ld (App_MsgBuf+10),ix
+        ld (App_MsgBuf+12),iy
         ret
 
 SySystem_WaitMessage
@@ -475,12 +497,24 @@ SySystem_WaitMessage
 ;*** Description    Sends a message to the desktop manager, which includes the
 ;***                window ID and additional parameters
 ;******************************************************************************
-        ld iy,App_MsgBuf
-SySWMs1 db #dd:ld h,PRC_ID_SYSTEM
-        ld a,(App_PrcID)
-        db #dd:ld l,a
-        rst #08             ;wait for a system manager message
-        db #dd:dec l
+        ld (App_MsgBuf+3),a
+        ld a,c
+        add 128
+        ld (SySWMsN+1),a
+        call SysSMg0
+SySWMs0 ld iy,App_MsgBuf
+SySWMs1 ld ix,(App_PrcID)
+        ld ixh,PRC_ID_SYSTEM
+SySWMs2 rst #08             ;wait for a system manager message
+        dec ixl
         jr nz,SySWMs1
-        ld a,(App_MsgBuf+0)
-        ret
+        ld hl,(App_MsgBuf+0)
+SySWMsN ld a,0              ;check, if matching response
+        cp l
+        ld a,h              ;a=(msgbuf+1)
+        ret z
+        ld ix,(App_PrcID-1) ;no -> ixl=sender (system), ixh=receiver (me)
+        ld ixl,PRC_ID_SYSTEM
+        rst #10             ;resend message to myself
+        rst #30
+        jr SySWMs1

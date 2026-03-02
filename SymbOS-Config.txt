@@ -26,7 +26,7 @@ The SYMBOS.INI file is divided into 5 parts:
 HEADER
 -------------------------------------------------------------------------------
 0000   2B  Identifier, which also contains the version of the config file
-           [byte0]="S", [byte1]=1 (current version)
+           [byte0]="S", [byte1]=2 (current version)
 0002   1W  length of the header (=8 bytes) plus the core area part of the
            SymbOS system configuration (will be always loaded to ram-bank 0)
 0004   1W  length of the data area part (the ram-bank depends on the computer
@@ -89,31 +89,50 @@ CORE AREA PART
 
 *** MISCELLANEOUS (2) AND DESKTOP LINKS (1) ***
 0237   1B  SYMBOS.INI drive ("A",...)
-0238   1B  miscellaneous flags
-           [bit0]=autosave config
-0239   1B  flag (1), if SymbOS extension module should be loaded
-0240   1B  flag for extended hardware (+1=Mouse, +2=Real time clock,
-           +4=mass storage device, +8=Gfx9000)
+0238   1B  setting flags (1)
+           [bit0]  =autosave config
+           [bit1]  =use maximum memory for file selection dialog
+           [bit2]  =alternative start menu button
+           [bit3]  =run autoexec when booting                                   NEW IN S2[moved from 310] (##!!##todo CP)
+           [bit4]  =50Hz(0)/60Hz(1)                                             NEW IN S2
+           [bit5-7]=*reserved*
+0239   1B  setting flags (2)
+           [bit0]  =load SymbOS extended desktop
+           [bit1-7]=*reserved*
+0240   1B  hardware flags
+           [bit0]  =mouse
+           [bit1]  =realtime clock
+           [bit2]  =mass storage device
+           [bit3]  =GFX9000
+           [bit4-7]=*reserved*
 0241   1B  virtual desktop (0=no virtual desktop,
-           Bit[0-3] -> X-resolution, 1=512, 2=1000,
-           Bit[4-7] -> Y-resolution, not yet defined)
+           [bit0-3] -> X-resolution, 1=512, 2=1024,
+           [bit4-7] -> Y-resolution, not yet defined)
 0242   1B  number of desktop icons
 0243   1B  number of start menu/programs entries
-0244   1B  number of taskbar short-cut entries (currently not supported)
-0245   1B  Bit[0-4] machine type
+0244   1B  property flags                                                       NEW IN S2[was: number of systray entries]
+           [bit0]  =long filename support                                       NEW IN S2
+           [bit1]  =internal 255 char font                                      NEW IN S2
+           [bit2-4]=*reserved*
+           [bit5-6]=background image size (0=320x200, 1=512x212, 2=*res*,       NEW IN S2[moved from 245] (##!!##todo SYMSEE)
+                                           3=platform specific)
+           [bit7]  =*reserved*
+0245   1B  [bit0-6]=machine type
                     0=CPC 464, 1=CPC 664, 2=CPC 6128, 3=CPC 464+, 4=CPC 6128+,
                     6=Enterprise,
                     7=MSX1, 8=MSX2, 9=MSX2+, 10=MSX turboR,
                     12=PCW8xxx, 13=PCW9xxx,
                     14=PcW16,
                     15=NC100, 16=NC150, 17=NC200,
-           Bit[5-6] background image size (0=320x200, 1=512x212, 2=256x192, 3=
-                                           platform specific)
-           Bit[7]   colour encoding (0=CPC, 1=MSX)
+                    18=SymbOS Virtual Machine,
+                    19=Isetta TTL computer,
+                    20=ZX Spectrum Next,
+                    32=NGZ80-Evo                                                NEW IN S2[moved to 244]
+           [bit7]  =colour encoding (0=CPC, 1=MSX)
 0246  16W  desktop icon positions; for each of the 8 icons there are two words,
            the first contains the X-, the second the Y-position
 0278  32B  path and filename of the autoexec command line file
-0310   1B  flag, if autoexec command line file should be executed
+0310   1B  writing system of loaded font (0=simple ascii, 2=latin, ...)         NEW IN S2[moved to 238]
 -------------------------------------------------------------------------------
 
 
@@ -174,11 +193,12 @@ This area is currently not used and has a size of 0 bytes.
 ===============================================================================
 FONT
 -------------------------------------------------------------------------------
-0000   1B  char height in pixel (1-15; usual 8)
-0001   1B  number of the first defined char (always 32)
-0002 1568B char width/bitmaps (98 x 16 bytes)
+0000   1B  always 72; char height in pixel (+8), small font (+64)
+0001   1B  1 or 32; number of the first defined char
+0002 ???B  char width/bitmaps (99 x 9 or 255 x 9 bytes)
            00   1B  char width
-           01  15B  char bitmap
+           01   8B  char bitmap
+           font may contain 99 or 255 chars, see CORE AREA PART byte 244, bit 1
 -------------------------------------------------------------------------------
 
 
@@ -246,8 +266,9 @@ Description:    Sends back the address of the core area part (including the
 -------------------------------------------------------------------------------
 Request type:   8 [get font and version string memory address]
 Input:          E  = 8
-Output:         DE = font address (ram bank 0)
-                IX = font length (=2 byte header + 98*16 byte char bitmaps)
+Output:         DE = font address
+                IXL= font type (0=96+6 char small font, 1=255 char small font)
+                IXH= font bank (if >0, the font is a big font with 255 chars)
                 IY = address of the version information (this is placed in the
                      data area ram bank). The version information has a length
                      of 32 bytes:

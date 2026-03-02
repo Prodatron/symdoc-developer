@@ -149,7 +149,7 @@ ifdef use_SySound_MUSRST
 ;*** ID             010 (MUSRST)
 ;*** Name           Music_Restart
 ;*** Input          A   = Handle
-;***                L   = Subsound ID
+;***                L   = Subsong ID
 ;*** Destroyed      AF,BC,DE,HL,IX,IY
 ;*** Description    Starts playing a music from the beginning.
 ;******************************************************************************

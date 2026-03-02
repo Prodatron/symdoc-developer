@@ -44,6 +44,7 @@
 ;use_SyDesktop_MENCTX    equ 0   ;Opens a context menu
 ;use_SyDesktop_STIADD    equ 0   ;Adds an icon to the systray
 ;use_SyDesktop_STIREM    equ 0   ;Removes an icon from the systray
+;use_SyDesktop_STIUPD    equ 0   ;Redraws all systray icons
 ;use_SyDesktop_CONPOS    equ 0   ;Moves a virtual control
 ;use_SyDesktop_CONSIZ    equ 0   ;Resizes a virtual control
 
@@ -486,13 +487,20 @@ SyDesktop_WINSIN
 ;*** Name           Window_Redraw_SubControl_Command
 ;*** Input          A  = Window ID
 ;***                E  = control collection ID
-;***                D  = ID of the sub control inside the control collection
+;***                D  = sub control ID or negative number of sub controls
+;***                     000 - 239 -> the sub control of the control collection
+;***                                  with the specified ID will be redrawed.
+;***                     240 - 255 -> redraws -D sub controls, starting from
+;***                                  control L. As an example, if D is -3
+;***                                  (253) and L is 5, the sub controls 5, 6
+;***                                  and 7 will be redrawed.
+;***                - if D is between 240 and 255:
+;***                L  = ID of the first sub control, which should be redrawed
 ;*** Output         -
 ;*** Destroyed      AF,BC,DE,HL,IX,IY
 ;*** Limitation     works always
-;*** Description    This command works like MSC_DSK_WINDIN, but it updates only one
-;***                sub control inside a control collection. This command currently
-;***                doesn't support the redrawing of multiple sub controls.
+;*** Description    This command works like MSC_DSK_WINDIN, but it updates one or
+;***                multiple sub control inside a control collection.
 ;***                For additional information see also MSC_DSK_WINDIN.
 ;******************************************************************************
         ld c,MSC_DSK_WINSIN
@@ -596,6 +604,22 @@ SyDesktop_STIREM
     endif
 endif
 
+ifdef use_SyDesktop_STIUPD
+    if use_SyDesktop_STIUPD=1
+SyDesktop_STIUPD
+;******************************************************************************
+;*** Name           SystrayIcon_Update_Command
+;*** Input          -
+;*** Output         -
+;*** Destroyed      AF,BC,DE,HL,IX,IY
+;*** Description    Redraws all systray icon in the task bar. Use this function
+;***                if the bitmap of a systray icon has been changed.
+;******************************************************************************
+        ld c,MSC_DSK_STIUPD
+        jp SyDesktop_SendMessage
+    endif
+endif
+
 ifdef use_SyDesktop_CONPOS
     if use_SyDesktop_CONPOS=1
 SyDesktop_CONPOS
@@ -690,17 +714,7 @@ SyDesktop_MODGET
 ;*** Name           DesktopService_ScreenModeGet
 ;*** Input          -
 ;*** Output         E  = Screen mode; the available modes depend on the computer
-;***                     platform.
-;***                     PCW    0 = 720 x 255,  2 colours (PCW standard mode)
-;***                     CPC,EP 1 = 320 x 200,  4 colours (CPC,EP standard mode)
-;***                            2 = 640 x 200,  2 colours
-;***                     MSX    5 = 256 x 212, 16 colours
-;***                            6 = 512 x 212,  4 colours
-;***                            7 = 512 x 212, 16 colours (MSX standard mode)
-;***                     G9K    8 = 384 x 240, 16 colours
-;***                            9 = 512 x 212, 16 colours (G9K standard mode)
-;***                           10 = 768 x 240, 16 colours
-;***                           11 = 1024x 212, 16 colours
+;***                     platform (see SymbOS-Desktop.txt)
 ;***                - if G9K:
 ;***                D  = Virtual desktop width
 ;***                          0 = no virtual desktop
@@ -721,17 +735,7 @@ SyDesktop_MODSET
 ;******************************************************************************
 ;*** Name           DesktopService_ScreenModeSet
 ;*** Input          E  = Screen mode; the available modes depend on the computer
-;***                     platform.
-;***                     PCW  0 = 720 x 255,  2 colours (PCW standard mode)
-;***                     CPC  1 = 320 x 200,  4 colours (CPC standard mode)
-;***                          2 = 640 x 200,  2 colours
-;***                     MSX  5 = 256 x 212, 16 colours
-;***                          6 = 512 x 212,  4 colours (MSX standard mode)
-;***                          7 = 512 x 212, 16 colours
-;***                     G9K  8 = 384 x 240, 16 colours
-;***                          9 = 512 x 212, 16 colours (G9K standard mode)
-;***                         10 = 768 x 240, 16 colours
-;***                         11 = 1024x 212, 16 colours
+;***                     platform (see SymbOS-Desktop.txt)
 ;***                - if G9K:
 ;***                D  = Virtual desktop width
 ;***                          0 = no virtual desktop
@@ -860,6 +864,22 @@ SyDesktop_DSKPLT
 ;***                all windows will be updated.
 ;******************************************************************************
         ld a,DSK_SRV_DSKPLT
+        jp SyDesktop_Service
+    endif
+endif
+
+ifdef use_SyDesktop_DSKALL
+    if use_SyDesktop_DSKALL=1
+SyDesktop_DSKALL
+;******************************************************************************
+;*** Name           DesktopService_RedrawAll
+;*** Input          -
+;*** Output         -
+;*** Destroyed      AF,BC,DE,HL,IX,IY
+;*** Description    Redraws the complete screen. The background, the task bar and
+;***                all windows will be updated.
+;******************************************************************************
+        ld a,DSK_SRV_DSKALL
         jp SyDesktop_Service
     endif
 endif

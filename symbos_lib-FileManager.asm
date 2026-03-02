@@ -571,9 +571,11 @@ SyFile_DIRINP
 ;***                ??  1B  0 terminator
 ;***                [next entry]
 ;*** Description    Reads the content of a directory. You can specify a name filter
-;***                by adding a file mask to the path (* and ? are allowed) and an
-;***                attribute filter. We recommend always to set Bit3 (volume ID)
-;***                of the attribute filter byte.
+;***                by adding a file mask to the path (* and ? are allowed). The
+;***                mask is only used for files, not for entries with the attribute
+;***                "directory" (Bit4). Attributes can be filtered as well. We
+;***                recommend always to set Bit3 (volume ID) of the attribute
+;***                filter byte.
 ;***                The system skips the specified amount of entries first and then
 ;***                loads as many entries as exist or as there is place in the
 ;***                destination buffer. Please note, that the entries will not be
@@ -799,29 +801,28 @@ SySystem_CallFunction
         push hl
         ld (App_MsgBuf+00),de   ;module und funktion number
         ld a,e
-        ld (SyCallN),a
+        ld (SyCallN+1),a
         ld iy,App_MsgBuf
-        ld a,(App_PrcID)
-        db #dd:ld l,a
-        ld a,3
-        db #dd:ld h,a
-        rst #10                 ;send message
-SyCall1 rst #30
+        ld ix,(App_PrcID)
+        ld ixh,PRC_ID_SYSTEM
+SyCall0 rst #10                 ;send message
+        ;...trigger highprio restart ##!!##
         ld iy,App_MsgBuf
-        ld a,(App_PrcID)
-        db #dd:ld l,a
-        ld a,3
-        db #dd:ld h,a
-        rst #18                 ;wait for answer
-        db #dd:dec l
+SyCall1 ld ix,(App_PrcID)
+        ld ixh,PRC_ID_SYSTEM
+        rst #08                 ;wait for answer
+        dec ixl
         jr nz,SyCall1
         ld a,(App_MsgBuf)
         sub 128
-        ld e,a
-        ld a,(SyCallN)
-        cp e
-        jr nz,SyCall1
-        ld hl,(App_MsgBuf+02)   ;get registers out of the message buffer
+SyCallN cp 0
+        jr z,SyCall2
+        ld ix,(App_PrcID-1)     ;ixh=receiver (my process)
+        ld ixl,PRC_ID_SYSTEM    ;ixl=sender (system process)
+        rst #10
+        rst #30
+        jr SyCall1              ;resend message again, if it's not the expected one
+SyCall2 ld hl,(App_MsgBuf+02)   ;get registers out of the message buffer
         push hl
         pop af
         ld bc,(App_MsgBuf+04)
@@ -830,4 +831,3 @@ SyCall1 rst #30
         ld ix,(App_MsgBuf+10)
         ld iy,(App_MsgBuf+12)
         ret
-SyCallN db 0

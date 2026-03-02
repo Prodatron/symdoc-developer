@@ -133,6 +133,7 @@ Input:          -
 Output:         E  = [Bit0] Shift     (1=pressed)
                      [Bit1] Control   (1=pressed)
                      [Bit2] Alt       (1=pressed)
+                     [Bit3] AltGr     (1=pressed)
                 D  = Caps lock status (1=locked)
 Destroyed:      AF,BC,HL,IX,IY
 Description:    Returns the status of the shift/control/alt/capslock keys.
@@ -177,58 +178,76 @@ Description:    Writes multiple bytes to a hardware port in a very fast way
 
 
 ===============================================================================
-EXTENDED ASCII CODES
+EXTENDED KEYBOARD CODES
 -------------------------------------------------------------------------------
-001 = Ctrl + A          140 = F0                176 = Alt + Y
-002 = Ctrl + B          141 = F1                177 = Alt + Z
-003 = Ctrl + C          142 = F2                178 = Alt + 0
-004 = Ctrl + D          143 = F3                179 = Alt + 1
-005 = Ctrl + E          144 = F4                180 = Alt + 2
-006 = Ctrl + F          145 = F5                181 = Alt + 3
-007 = Ctrl + G          146 = F6                182 = Alt + 4
-008 = Ctrl + H          147 = F7                183 = Alt + 5
-009 = Ctrl + I          148 = F8                184 = Alt + 6
-010 = Ctrl + J          149 = F9                185 = Alt + 7
-011 = Ctrl + K          150 = F.                186 = Alt + 8
-012 = Ctrl + L          151 = Alt + @           187 = Alt + 9
-013 = Ctrl + M          152 = Alt + A
-014 = Ctrl + N          153 = Alt + B           192 = Ctrl + 1
-015 = Ctrl + O          154 = Alt + C           193 = Ctrl + 2
-016 = Ctrl + P          155 = Alt + D           194 = Ctrl + 3
-017 = Ctrl + Q          156 = Alt + E           195 = Ctrl + 4
-018 = Ctrl + R          157 = Alt + F           196 = Ctrl + 5
-019 = Ctrl + S          158 = Alt + G           197 = Ctrl + 6
-020 = Ctrl + T          159 = Alt + H           198 = Ctrl + 7
-021 = Ctrl + U          160 = Alt + I           199 = Ctrl + 8
-022 = Ctrl + V          161 = Alt + J
-023 = Ctrl + W          162 = Alt + K           008 = Backspace
-024 = Ctrl + X          163 = Alt + L           013 = Return
-025 = Ctrl + Y          164 = Alt + M           127 = CLR
-026 = Ctrl + Z          165 = Alt + N
-027 = Ctrl + [          166 = Alt + O
-028 = Ctrl + \          167 = Alt + P
-029 = Ctrl + ]          168 = Alt + Q
-030 = Ctrl + 9          169 = Alt + R
-031 = Ctrl + 0          170 = Alt + S
-                        171 = Alt + T
-136 = cursor up         172 = Alt + U           #d0 = Alt + : (Ins)
-137 = cursor down       173 = Alt + V           #f0 = Alt + / (Prt -> Shot)
-138 = cursor left       174 = Alt + W           #fe = Alt + , (Hom -> DocBeg)
-139 = cursor right      175 = Alt + X           #ff = Alt + . (End -> DocEnd)
+001 = Ctrl + A          151 = F12               206 = Alt + F0/F10
+002 = Ctrl + B                                  207 = Alt + F1
+003 = Ctrl + C          152 = Alt + A           208 = Alt + F2
+004 = Ctrl + D          153 = Alt + B           209 = Alt + F3
+005 = Ctrl + E          154 = Alt + C           210 = Alt + F5
+006 = Ctrl + F          155 = Alt + D           211 = Alt + F6
+007 = Ctrl + G          156 = Alt + E           212 = Alt + F7
+008 = Ctrl + H          157 = Alt + F           213 = Alt + F8
+009 = Ctrl + I          158 = Alt + G           214 = Alt + F9
+010 = Ctrl + J          159 = Alt + H           215 = Alt + F./F11
+011 = Ctrl + K          160 = Alt + I           216 = Alt + F12
+012 = Ctrl + L          161 = Alt + J
+013 = Ctrl + M          162 = Alt + K           217 = Ctrl + F0/F10
+014 = Ctrl + N          163 = Alt + L           218 = Ctrl + F1
+015 = Ctrl + O          164 = Alt + M (kMenu)   219 = Ctrl + F2
+016 = Ctrl + P          165 = Alt + N           220 = Ctrl + F3
+017 = Ctrl + Q          166 = Alt + O           221 = Ctrl + F4
+018 = Ctrl + R          167 = Alt + P           222 = Ctrl + F5
+019 = Ctrl + S          168 = Alt + Q           223 = Ctrl + F6
+020 = Ctrl + T          169 = Alt + R           224 = Ctrl + F7
+021 = Ctrl + U          170 = Alt + S           225 = Ctrl + F8
+022 = Ctrl + V          171 = Alt + T           226 = Ctrl + F9
+023 = Ctrl + W          172 = Alt + U           227 = Ctrl + F./F11
+024 = Ctrl + X          173 = Alt + V           228 = Ctrl + F12
+025 = Ctrl + Y          174 = Alt + W
+026 = Ctrl + Z          175 = Alt + X
+027 = Ctrl + [          176 = Alt + Y           229 = *res*
+                        177 = Alt + Z           230 = *res*
+028 = *keymapping*                              231 = *res*
+029 = *keymapping*      178 = Alt + 0           232 = *res*
+030 = *keymapping*      179 = Alt + 1           233 = *res*
+031 = *keymapping*      180 = Alt + 2           234 = *res*
+                        181 = Alt + 3           235 = *res*
+008 = Backspace         182 = Alt + 4           236 = *res*
+013 = Return            183 = Alt + 5           237 = *res*
+027 = Escape            184 = Alt + 6           238 = *res*
+127 = Clr               185 = Alt + 7           239 = *res*
+                        186 = Alt + 8           240 = *res*
+136 = cursor up         187 = Alt + 9           241 = *res*
+137 = cursor down                               242 = *res*
+138 = cursor left       192 = Ctrl + 0 (kMute)  243 = *res*
+139 = cursor right      193 = Ctrl + 1 (kPrint) 244 = *res*
+                        194 = Ctrl + 2 *res*    245 = *res*
+140 = F0/F10            195 = Ctrl + 3 *res*    246 = *res*
+141 = F1                196 = Ctrl + 4 (kPlay)  247 = *res*
+142 = F2                197 = Ctrl + 5 (kStop)
+143 = F3                198 = Ctrl + 6 (kPrev)  248 = [TIC]get cursor position
+144 = F4                199 = Ctrl + 7 (kNext)  249 = [TIC]reformat text
+145 = F5                200 = Ctrl + 8 (kVolD)  250 = [TIC]set cursor/selection
+146 = F6                201 = Ctrl + 9 (kVolU)  251 = *res*
+147 = F7                202 = Shft+Spce(X*res)  252 = *res*
+148 = F8                203 = Ctrl+Spce(XKbLy)  253 = Ctrl + Del (Ins)
+149 = F9                204 = ?        (X*res)  254 = Alt + , (kHome -> DocBeg)
+150 = F./F11            205 = ?        (X*res)  255 = Alt + . (kEnd  -> DocEnd)
 -------------------------------------------------------------------------------
 
 
 ===============================================================================
-INTERNAL ASCII CODES (NOT AVAILABLE FOR APPLICATIONS)
+INTERNAL KEYBOARD CODES (NOT AVAILABLE FOR APPLICATIONS)
 -------------------------------------------------------------------------------
-128 = Ctrl + Alt + Clr      enter SymbOS security
-129 = Alt + Tab             open task switcher with next window selected
+128 = Ctrl + Alt + Clr      enter SymbOS security                        (ExtD)
+129 = Alt + Tab             open task switcher with next window selected (ExtD)
 130 = Alt + Esc             switch to next window directly
 131 = Alt + F4              close current window
-132 = Ctrl + Esc            open startmenu
+132 = Ctrl + Esc (kGui)     open startmenu
 133 = Ctrl + Shift + Esc    open Task Manager
 134 = Mouse double click
-135 = Alt + Shift + Tab     open task switcher with previous window selected
+135 = Alt + Shift + Tab     open task switcher with previous window sel. (ExtD)
 188 = Mouse left click
 189 = Mouse left release
 190 = Mouse right click

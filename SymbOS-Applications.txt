@@ -98,12 +98,16 @@ this type. Here you should place everything, which does not need to be in one
 of the other areas.
 
 B.) Data area: The data area needs to be placed inside a 16K block. All texts
-and graphics, which are plottet on the screen, must be placed here.
+and graphics, which are plottet on the screen, must be placed here or in the
+transfer area.
 
 C.) Transfer area: The transfer area needs to be placed in the last 16K block
 (#C000-#FFFF). The stack, the message buffer and all window data records,
 control data records and control variables (radio button status, selected tab
-etc.) must be placed here.
+etc.) must be placed here. Texts and graphics, which are plottet on the screen,
+can be placed here optionally. This should only be done, if it's not possible
+to store them in the data area, as the available memory for the transfer area
+is usually more limited.
 
 Please note, that the application itself does not need to take care about the
 correct position of a memory area. This is done by the system manager, when it
@@ -164,9 +168,11 @@ will be started.
             [bit6]=1 data part is compressed
             [bit5]=1 transfer part is compressed
             [bit4]=1 relocator table is compressed
-041   1W    16 colour icon file offset
+041   1W    16 colour icon file offset (if the file were uncompressed)
 043   5B    *RESERVED* (must be 0)
-048   8B    "SymExe10" SymbOS executable file identification
+048   8B    SymbOS executable file identification
+            - "SymExe10" if not packed/compressed at all
+            - "SymExe11" if one or more parts are compressed/packed
 056   1W    Length of additional reserved code     area memory
 058   1W    Length of additional reserved data     area memory
 060   1W    Length of additional reserved transfer area memory
@@ -188,12 +194,6 @@ extended memory. You can't use pointers, who are directly pointing to this
 extended memory, because in this case the relocator would think, you want to
 access memory in another memory area, as the pointer is outside the static part
 of the area. You will need to calculate the address first inside the code.
-
-The 24bit value at 43 stores the size of the whole executable including the
-relocator table. This can be used to attach data at the end of the application
-file and find out its offset. Don't calculate this value by adding the first
-words in the header, as since an executable can be compressed (see flags at 30)
-this value has to be used.
 
 After the application has been initialized and started, some parts of the
 header have been replaced by new data.
@@ -270,6 +270,51 @@ On average, a packed relocator table is about a third smaller than an unpacked
 table. This is already a lot, but in most cases it still make sense to compress
 these packed tables with ZX0 as well (see above). The order is always as
 follows, first the table must be packed and then compressed.
+
+
+16 colour icons
+
+Applications can contain a 16-color version of their 24x24 pixel icon (see
+flags at 040, offset at 041 in the header). These must always be stored either
+in the data or, if necessary, in the transfer area. Storing them directly at
+the beginning of the data or transfer area is recommended for the following
+reason: In compressed applications, the initial part containing the icon is
+stored uncompressed, allowing tools that want to retrieve the icon from an
+executable file to do so easily without an additional decompression step.
+
+Retrieving an icon from a compressed file, however, requires some extra work.
+The icon offset stored in the header under 041 is based on the uncompressed
+data. To calculate the actual file offset, you can use the following code (in
+Python):
+
+```
+def icon_offset(file_binary):
+    flags = file_binary[40]
+    if flaggs && 0 = 0:
+        return -1
+    icon_offset = file_binary[41] + file_binary[42] * 256
+    file_offset = 256
+    reached, icon_offset, file_offset = next_offset(file_binary, flags && 128, icon_offset, file_offset, file_binary[0] + file_binary[1] * 256)
+    reached, icon_offset, file_offset = next_offset(file_binary, flags &&  64, icon_offset, file_offset, file_binary[2] + file_binary[3] * 256)
+    if reached:
+        return icon_offset
+    reached, icon_offset, file_offset = next_offset(file_binary, flags &&  32, icon_offset, file_offset, file_binary[4] + file_binary[5] * 256)
+    return icon_offset
+
+def next_offset(file_binary, compressed, icon_offset, file_offset, uncompr_len):
+    if icon_offset < file_offset + uncompr_len:
+        if compressed:
+            return true, icon_offset+8, 0
+        else:
+            return true, icon_offset, 0
+    if compressed:
+            compr_len = file_binary[file_offset] + file_binary[file_offset] * 256 + 2
+            return false, icon_offset + compr_len - uncompr_len, file_offset + compr_len
+        else:
+            return false, icon_offset,                           file_offset + uncompr_len
+
+icon_offset(executable_file)
+```
 
 
 Path and appended parameters
