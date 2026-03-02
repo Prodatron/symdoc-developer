@@ -1156,3 +1156,64 @@ Scheduled:
 07 - latin2     (=codepage 1250) [N/A]
 08 - hebrew     (=codepage 1255) [N/A]
 09 - arabic     (=codepage 1256) [N/A]
+-------------------------------------------------------------------------------
+
+
+
+TEXT POINTERS FOR MULTILINGUAL SUPPORT
+
+===============================================================================
+To fully support multilingual text in the SymbOS graphical user interface,
+nearly all controls containing text strings can optionally reference a text
+pointer instead of the text string itself. These are controls that contain a
+pointer to an address where you would normally expect a text string ending with
+zero.
+
+If the text string begins with the value 01, it does not contain the actual
+text, but is followed by another 16-bit word pointer that points to the actual
+0-terminated text string.
+
+The simplest example is the button control:
+
+- If the text address points to "button_text" and is, for example:
+  button_text: db "Hello World!",0
+  ...a button labeled "Hello World!" will be displayed.
+- If the text address references "button_pointer" and is, for example:
+  button_pointer: db 1:dw button_international_text
+  button_international_text: db "Hola Mundo!",0
+  ..a button labeled "Hola Mundo!" will be displayed.
+
+"button_international_text" must be placed in the same 16 KB data area as
+"button_pointer".
+
+This allows the text within an application's user interface to be changed
+without having to recompile the entire application. Controls will still
+reference text pointers at fixed addresses; only these need to be adjusted, for
+example, to display multilingual text versions.
+
+For more information about how to use the SymbOS multilingual functions please
+read the "SymbOS-Multilingual.txt" document.
+
+As mentioned earlier, this feature applies to almost all controls with text
+pointers:
+- 01 (PLT) paint_text
+- 03 (PLX) paint_frame_with_title
+- 05 (PLA) paint_text_with_alternative_font
+- 06 (PLC) paint_text_with_control_codes (only for code 07, see note below)
+- 09 (ICT) graphic_with_text
+- 17 (BTC) button_check
+- 18 (BTR) button_radio
+- 20 (BTT) button_tabs
+- 40 (LST) list_title
+- 41 (LSI) list_content
+- 42 (LSP) list_dropdown
+- 43 (LSC) list_complete
+- 44 (TRE) tree_content
+
+Special cases:
+- both the "textinput_line" (32) and "textinput_box" (33) controls output a
+leading "01" as the character of the selected font; they do not handle it as a
+text pointer.
+- "paint_text_with_control_codes" must not begin with 01 to specify pen and
+paper; when using the code "07" within the text, it can refer to a 0-terminated
+text string or to a "01" text pointer.
