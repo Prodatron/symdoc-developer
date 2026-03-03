@@ -671,13 +671,13 @@ Commands:       The textinput box control provides additional functions, which
                 as well.
                 The following commands are available:
                 code 248    get cursor position; this command returns the
-                  (was 29)  current cursor position
+                            current cursor position
                             Output: (buffer+0)=column (starting at 0)
                                     (buffer+2)=line (starting at 0)
                 code 249    text has been modified; this command forces the
-                  (was 30)  control to reformat and update the text
+                            control to reformat and update the text
                 code 250    set cursor position and text selection; the visible
-                  (was 31)  area of the textinput box will be scrolled to the
+                            area of the textinput box will be scrolled to the
                             new position, if necessary
                             Input:  (buffer+0)=new cursor position
                                     (buffer+2)=new number of selected
@@ -1196,24 +1196,61 @@ read the "SymbOS-Multilingual.txt" document.
 
 As mentioned earlier, this feature applies to almost all controls with text
 pointers:
-- 01 (PLT) paint_text
-- 03 (PLX) paint_frame_with_title
-- 05 (PLA) paint_text_with_alternative_font
-- 06 (PLC) paint_text_with_control_codes (only for code 07, see note below)
-- 09 (ICT) graphic_with_text
-- 17 (BTC) button_check
-- 18 (BTR) button_radio
-- 20 (BTT) button_tabs
-- 40 (LST) list_title
-- 41 (LSI) list_content
-- 42 (LSP) list_dropdown
-- 43 (LSC) list_complete
-- 44 (TRE) tree_content
+- control 01 (PLT) paint_text
+- control 03 (PLX) paint_frame_with_title
+- control 05 (PLA) paint_text_with_alternative_font
+- control 06 (PLC) paint_text_with_control_codes (only for code 07, see note below)
+- control 09 (ICT) graphic_with_text
+- control 17 (BTC) button_check
+- control 18 (BTR) button_radio
+- control 20 (BTT) button_tabs
+- control 40 (LST) list_title
+- control 41 (LSI) list_content
+- control 42 (LSP) list_dropdown
+- control 43 (LSC) list_complete
+- control 44 (TRE) tree_content
 
 Special cases:
 - both the "textinput_line" (32) and "textinput_box" (33) controls output a
 leading "01" as the character of the selected font; they do not handle it as a
 text pointer.
-- "paint_text_with_control_codes" must not begin with 01 to specify pen and
+- "paint_text_with_control_codes" must not begin with "01" to specify pen and
 paper; when using the code "07" within the text, it can refer to a 0-terminated
 text string or to a "01" text pointer.
+-------------------------------------------------------------------------------
+
+
+
+BACKWARD INCOMPATIBILITY BETWEEN SYMBOS 4.1 AND OLDER VERSIONS
+
+===============================================================================
+SymbOS 4.1 introduced new functions for displaying large fonts and processing
+multilingual GUI text. For optimal implementation some minor changes were
+necessary, which make some controls and data structures backward incompatible
+to older SymbOS versions. Only system and standard applications were affected,
+which are updated with each new version anyway.
+
+Here is a list of all changes:
+
+- control 06 (PLC) "paint_text_with_control_codes"
+  - the use of code 01 (pen/paper setting) in the first byte is no longer
+    permitted
+  - codes for enabling/disabling underlining (03, 04) have been replaced by a
+    code for setting flags (03), one of which represents the underlining mode;
+    code 04 is currently undefined
+  - codes for inserting dynamic whitespace have been limited from 12–31 to
+    12–28, allowing a maximum insertion of 20 pixels (29, 30, 31 now draw
+    system characters)
+
+- control 33 (TXB) "textinput_box"
+  - command codes for "set cursor", "get cursor" and "reformat text" have been
+    reassigned from 29–31 to 248–250; see control description
+
+- control 44 (TRE) "tree_content"
+  - status characters for showing a leaf, a collapsed node and an expanded node
+    have been reassigned from 127, 129, 130 to 29, 30, 31; see control
+    description
+
+- fonts containing characters beyond 127 must have the "255 characters" flag
+  (bit 7 in header byte 0) set; otherwise, the system would display "?" symbols
+  for characters 128 and above
