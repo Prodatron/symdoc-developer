@@ -186,8 +186,6 @@ Description     Tries to replace the default language of the application with
 
 ===============================================================================
 LANGUAGE PACK FILE FORMAT (*.LNG)
-
-...
 -------------------------------------------------------------------------------
 Header
 
@@ -307,7 +305,7 @@ the Microsoft "Windows Language Code Identifiers" (MS-LCID).
 ===============================================================================
 CODEPAGES
 
-The following codepages with international character sets are currently available.
+The following codepages with international character sets are currently available. See "SymbOS-Multilingual-Codepages.txt" for details.
 
 02 - LATIN 1    (Windows CP 1252 + turkish characters)
 
@@ -335,5 +333,5 @@ The following codepages with international character sets are currently availabl
 ===============================================================================
 UNICODE IDS
 
-see "SymbOS-Multilingual-Characters.txt"
+See "SymbOS-Multilingual-Characters.txt".
 -------------------------------------------------------------------------------
