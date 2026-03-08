@@ -433,24 +433,43 @@ ifdef use_SySystem_LNGLOD
     if use_SySystem_LNGLOD=1
 SySystem_LNGLOD
 ;******************************************************************************
-;*** Name           Language_Load_Command
-;*** Input          P10 / IXL=application's default language ID
-;***                P11 / IXH=pack
-;***                P12 / IYL=version
-;***                P6  / A  =path bank
-;***                P4  / DE =path address
-;***                P7  / C  =text bank
-;***                P8  / HL =text address
+;*** Name           Language_Load
+;*** Input          IXL= application's default language ID
+;***                IXH= pack
+;***                IYL= version
+;***                A  = application path bank
+;***                DE = application path address
+;***                C  = text bank
+;***                HL = text address
 ;*** Output         A  = Success status
 ;***                     0 -> service not available
 ;***                     1 -> OK, the required language package has either been
 ;***                          loaded successfully, or the application's default
 ;***                          language matches the required language
-;***                     2 -> disc error
+;***                     2 -> no LNG file found or disc error
 ;***                     3 -> wrong version or pack number too high
 ;***                     4 -> language not available
 ;*** Destroyed      F,BC,DE,HL,IX,IY
-;*** Description    ...
+;*** Description    Tries to replace the default language of the application with
+;***                the alternative language, set by the user in the control panel,
+;***                from the application's language pack (*.LNG) file. The path
+;***                does not need to contain the exact LNG filename, as the
+;***                function always replaces the file extension with "LNG".
+;***                Therefore, you can usually just use the application's original
+;***                path, which will not change when returning from the function.
+;***                The text bank and address must point to the first entry in the
+;***                text pointer list, which must be located directly before the
+;***                section containing the text strings. Each text pointer is 3
+;***                bytes in size: a byte with the value 1, followed by a word that
+;***                references the text string. The number of text pointers must
+;***                correspond to the number of texts in the respective package.
+;***                The package number selects the text package if multiple text
+;***                locations exist, whether in different memory areas or in
+;***                multiple binaries of the same application. The version number
+;***                helps avoid conflicts that can arise if different versions of
+;***                the application binary and its language pack file (LNG) are
+;***                accidentally present. The application's default language ID is
+;***                used to check whether a text exchange is even necessary.
 ;******************************************************************************
         call SySSMg1
         ld a,(App_BnkNum)

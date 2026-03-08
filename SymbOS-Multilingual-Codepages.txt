@@ -1,0 +1,151 @@
+﻿S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / SymbiosiS
+Date:   08.03.2026
+===============================================================================
+
+C O D E P A G E S
+
+===============================================================================
+
+LEGEND
+
+EOL - end of line (0)
+POI - multilanguage textpointer (1)
+LF  - line feed (10)
+CR  - carriage return (13)
+SYS - system chars
+SPC - space (32)
+DEL - backspace (127)
+NBS - non breakable space (160)
+
+===============================================================================
+
+02 - LATIN 1    (Windows CP 1252 + turkish characters at 81,90,8D,9D,8F,AD)
+
+     Afrikaans, Basque, Catalan, Danish, Dutch, English, Faroese, Filipino,
+     French, Galician, German, Icelandic, Indonesian, Irish, Italian,
+     Luxembourgish, Malay, Norwegian, Occitan, Portuguese, Scottish Gaelic,
+     Spanish, Swahili, Swedish, Tagalog, Turkish, Welsh
+
+       |    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+     --+-------------------------------------------------------------------
+     0 |    EOL POI                                 LF          CR       
+     1 |                                    SYS SYS SYS SYS SYS SYS SYS SYS
+     2 |    SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+     3 |    0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+     4 |    @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+     5 |    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+     6 |    `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+     7 |    p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
+     8 |    €   Ğ   ‚   ƒ   „   …   †   ‡   ˆ   ‰   Š   ‹   Œ   İ   Ž   Ş
+     9 |    ğ   ‘   ’   “   ”   •   –   —   ˜   ™   š   ›   œ   ı   ž   Ÿ
+     A |    NBS ¡   ¢   £   ¤   ¥   ¦   §   ¨   ©   ª   «   ¬   ş   ®   ¯
+     B |    °   ±   ²   ³   ´   µ   ¶   ·   ¸   ¹   º   »   ¼   ½   ¾   ¿
+     C |    À   Á   Â   Ã   Ä   Å   Æ   Ç   È   É   Ê   Ë   Ì   Í   Î   Ï
+     D |    Ð   Ñ   Ò   Ó   Ô   Õ   Ö   ×   Ø   Ù   Ú   Û   Ü   Ý   Þ   ß
+     E |    à   á   â   ã   ä   å   æ   ç   è   é   ê   ë   ì   í   î   ï
+     F |    ð   ñ   ò   ó   ô   õ   ö   ÷   ø   ù   ú   û   ü   ý   þ   ÿ 
+
+===============================================================================
+
+03 - JAPANESE   (mostly MSX identical character set)
+
+     Japanese
+
+       |    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+     --+-------------------------------------------------------------------
+     0 |    EOL POI 火   水   木   金   土   日   年   円   LF  分   秒   CR  千   万   
+     1 |    π   月   大   中   小   時   百   ¥   SYS SYS SYS SYS SYS SYS SYS SYS
+     2 |    SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+     3 |    0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+     4 |    @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+     5 |    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+     6 |    `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+     7 |    p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
+     8 |                            を   ぁ   ぃ   ぅ   ぇ   ぉ   ゃ   ゅ   ょ   っ   
+     9 |        あ   い   う   え   お   か   き   く   け   こ   さ   し   す   せ   そ   
+     A |    　   。   「   」   、   ・   ヲ   ァ   ィ   ゥ   ェ   ォ   ャ   ュ   ョ   ッ   
+     B |    ー   ア   イ   ウ   エ   オ   カ   キ   ク   ケ   コ   サ   シ   ス   セ   ソ   
+     C |    タ   チ   ツ   テ   ト   ナ   ニ   ヌ   ネ   ノ   ハ   ヒ   フ   ヘ   ホ   マ   
+     D |    ミ   ム   メ   モ   ヤ   ユ   ヨ   ラ   リ   ル   レ   ロ   ワ   ン   ゙   ゚   
+     E |    た   ち   つ   て   と   な   に   ぬ   ね   の   は   ひ   ふ   へ   ほ   ま   
+     F |    み   む   め   も   や   ゆ   よ   ら   り   る   れ   ろ   わ   ん           
+
+===============================================================================
+
+04 - CHEROKEE   (cherokee alphabet at C0-FF,90-9F,8A-8F)
+
+     Cherokee
+
+       |    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+     --+-------------------------------------------------------------------
+     0 |    EOL POI                                 LF          CR       
+     1 |                                    SYS SYS SYS SYS SYS SYS SYS SYS
+     2 |    SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+     3 |    0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+     4 |    @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+     5 |    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+     6 |    `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+     7 |    p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
+     8 |    €       ‚   ƒ   „   …   †   ‡   ˆ   ‰   Ᏸ   Ᏹ   Ᏺ   Ᏻ   Ᏼ   Ᏽ   
+     9 |    Ꮰ   Ꮱ   Ꮲ   Ꮳ   Ꮴ   Ꮵ   Ꮶ   Ꮷ   Ꮸ   Ꮹ   Ꮺ   Ꮻ   Ꮼ   Ꮽ   Ꮾ   Ꮿ   
+     A |    NBS ¡   ¢   £   ¤   ¥   ¦   §   ¨   ©   ª   «   ¬   –   ®   ¯
+     B |    °   ±   ²   ³   ´   µ   ¶   ·   ¸   ¹   º   »   ¼   ½   ¾   ¿
+     C |    Ꭰ   Ꭱ   Ꭲ   Ꭳ   Ꭴ   Ꭵ   Ꭶ   Ꭷ   Ꭸ   Ꭹ   Ꭺ   Ꭻ   Ꭼ   Ꭽ   Ꭾ   Ꭿ   
+     D |    Ꮀ   Ꮁ   Ꮂ   Ꮃ   Ꮄ   Ꮅ   Ꮆ   Ꮇ   Ꮈ   Ꮉ   Ꮊ   Ꮋ   Ꮌ   Ꮍ   Ꮎ   Ꮏ  
+     E |    Ꮐ   Ꮑ   Ꮒ   Ꮓ   Ꮔ   Ꮕ   Ꮖ   Ꮗ   Ꮘ   Ꮙ   Ꮚ   Ꮛ   Ꮜ   Ꮝ   Ꮞ   Ꮟ   
+     F |    Ꮠ   Ꮡ   Ꮢ   Ꮣ   Ꮤ   Ꮥ   Ꮦ   Ꮧ   Ꮨ   Ꮩ   Ꮪ   Ꮫ   Ꮬ   Ꮭ   Ꮮ   Ꮯ   
+
+===============================================================================
+
+05 - GREEK      (Windows CP 1253)
+
+     Greek
+
+       |    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+     --+-------------------------------------------------------------------
+     0 |    EOL POI                                 LF          CR       
+     1 |                                    SYS SYS SYS SYS SYS SYS SYS SYS
+     2 |    SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+     3 |    0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+     4 |    @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+     5 |    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+     6 |    `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+     7 |    p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
+     8 |    €       ‚   ƒ   „   …   †   ‡       ‰       ‹                   
+     9 |        ‘   ’   “   ”   •   –   —       ™       ›                   
+     A |    NBS ΅   Ά   £   ¤   ¥   ¦   §   ¨   ©       «   ¬   –   ®   ―
+     B |    °   ±   ²   ³   ΄   µ   ¶   ·   Έ   Ή   Ί   »   Ό   ½   Ύ   Ώ
+     C |    ΐ   Α   Β   Γ   Δ   Ε   Ζ   Η   Θ   Ι   Κ   Λ   Μ   Ν   Ξ   Ο
+     D |    Π   Ρ       Σ   Τ   Υ   Φ   Χ   Ψ   Ω   Ϊ   Ϋ   ά   έ   ή   ί
+     E |    ΰ   α   β   γ   δ   ε   ζ   η   θ   ι   κ   λ   μ   ν   ξ   ο
+     F |    π   ρ   ς   σ   τ   υ   φ   χ   ψ   ω   ϊ   ϋ   ό   ύ   ώ    
+
+===============================================================================
+
+06 - CYRILLIC   (Windows CP 1251 + hryvnia sign at 98)
+
+     Abkhaz, Bashkir, Belarusian, Bulgarian, Buryat, Chechen, Ingush,
+     Kabardian, Kalmyk, Karachay-Balkar, Kazakh, Kyrgyz, Macedonian, Mongolian,
+     Ossetian, Russian, Serbian, Tajik, Tatar, Tuvan, Ukrainian, Yakut
+
+       |    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+     --+-------------------------------------------------------------------
+     0 |    EOL POI                                 LF          CR       
+     1 |                                    SYS SYS SYS SYS SYS SYS SYS SYS
+     2 |    SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+     3 |    0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+     4 |    @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+     5 |    P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+     6 |    `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+     7 |    p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
+     8 |    Ђ   Ѓ   ‚   ѓ   „   …   †   ‡   €   ‰   Љ   ‹   Њ   Ќ   Ћ   Џ
+     9 |    ђ   ‘   ’   “   ”   •   –   —   ₴   ™   љ   ›   њ   ќ   ћ   џ
+     A |    NBS Ў   ў   Ј   ¤   Ґ   ¦   §   Ё   ©   Є   «   ¬   –   ®   Ї
+     B |    °   ±   І   і   ґ   µ   ¶   ·   ё   №   є   »   ј   Ѕ   ѕ   ї
+     C |    А   Б   В   Г   Д   Е   Ж   З   И   Й   К   Л   М   Н   О   П
+     D |    Р   С   Т   У   Ф   Х   Ц   Ч   Ш   Щ   Ъ   Ы   Ь   Э   Ю   Я
+     E |    а   б   в   г   д   е   ж   з   и   й   к   л   м   н   о   п
+     F |    р   с   т   у   ф   х   ц   ч   ш   щ   ъ   ы   ь   э   ю   я
+
+===============================================================================

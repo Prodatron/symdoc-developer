@@ -1,0 +1,339 @@
+S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
+Author: Prodatron / SymbiosiS
+Date:   05.03.2026
+===============================================================================
+
+M U L T I L I N G U A L   S U P P O R T
+
+SymbOS allows the user to set the entire system to a different language. To do
+this, the user selects the preferred language in the Control Panel ("Fonts and
+Language"). An alternative language can be specified as a fallback, if the
+primary preferred language is not available.
+
+An application can now replace its default language with this other language at
+startup, so that the entire user interface appears in the other language. For
+this purpose, the application is equipped with an additional language pack file
+(*.LNG). Upon startup, the application calls an operating system function for
+multilingual support. This function checks whether the user's selected language
+matches the default language or whether it is available in the language pack
+file. In the latter case, the application's text is automatically replaced with
+that of the alternative language.
+
+
+PREPARING AN APPLICATION FOR MULTILINGUAL SUPPORT
+
+To enable the language switching of an application, the application's text must
+be prepared accordingly. First, all strings must be arranged in a single,
+contiguous area so that they appear directly next to each other in the code,
+without any other data in between.
+
+---------------------------------------
+Example:
+
+Before:
+
+checkbox_1  dw status_1
+            dw text_1
+            db paper+4*pen
+status_1    db 1
+text_1      db "Activate Item A",0
+
+checkbox_2  dw status_2
+            dw text_2
+            db paper+4*pen
+status_2    db 1
+text_2      db "Activate Item B",0
+
+Afterwards:
+
+checkbox_1  dw status_1
+            dw text_1
+            db paper+4*pen
+status_1    db 1
+
+checkbox_2  dw status_2
+            dw text_2
+            db paper+4*pen
+status_2    db 1
+
+text_1      db "Activate Item A",0
+text_2      db "Activate Item B",0
+---------------------------------------
+
+In the second step, an additional 3-byte pointer is created for each string.
+This pointer consists of a byte with the value 1, followed by a word that points
+to the actual text string. All references to the text no longer point directly
+to the text string but to this pointer. The list of pointers must be located
+directly before the area containing the text.
+
+---------------------------------------
+Example:
+
+Before:
+
+text_1      db "Activate Item A",0
+text_2      db "Activate Item B",0
+
+After:
+
+text_1      db 1:dw text_1_str
+text_2      db 1:dw text_2_str
+
+text_1_str  db "Activate Item A",0
+text_2_str  db "Activate Item B",0
+---------------------------------------
+
+Finally, a reserve area is created after the area containing the text. If the
+texts of the alternative language are longer than the application's default
+language, they can utilize this additional reserve area. The total size of the
+alternative language is therefore limited to the size of the default language
+plus the reserve area.
+
+---------------------------------------
+Example:
+
+text_1_str  db "Activate Item A",0
+text_2_str  db "Activate Item B",0
+text_res    ds 10
+---------------------------------------
+
+When the application is started, it first calls an operating system function
+for internationalizing its text (see below for detailed descriptions). This
+should happen before the application opens its first window or outputs any
+text. The function now checks whether the user has set an alternative language,
+whether it differs from the application's default language, and whether it is
+present in the application's language pack file. If so, the text strings are
+replaced with the alternative language, and the addresses within the pointer
+list are adjusted. This makes it possible that the references to the pointer
+list itself do not need to be changed. The application now appears entirely in
+the new language.
+
+
+MULTIPLE PACKS
+
+The application's language pack file can contain multiple text string packages.
+Each of these packages replaces a set of text strings in the application in one
+step when the multilingual function is used. Splitting the texts into multiple
+packages is necessary if the application has multiple locations for text strings
+(for example, one in the "data area" and one in the "transfer area") or if the
+application consists of multiple binaries that use the same LNG file, in order
+to keep the number of files to a minimum.
+
+
+WORKING WITH DYNAMIC STRINGS
+
+An application might work with dynamic strings whose parts need to be
+internationalized. When concatenating such strings, it's important to note that
+individual parts, if they consist of multilingual text fragments, can have
+different lengths depending on the language. The length of such a fragment can
+be determined by counting the characters up to the 0-terminator, if one exists.
+Alternatively, the difference between the pointers to the current and the
+following string can be calculated to determine the length of the current
+string. In this case, there must always be another string following it.
+
+
+MULTILINGUAL FUNCTION
+
+Like all internationalization functions, the function for replacing multilingual
+texts is provided by the Extended Desktop module. It is called using the System
+Manager system library. First, a message is sent to the System Manager. The
+System Manager then checks whether the Extended Desktop has been loaded. If so,
+the request is forwarded to the System Manager, and the result is then sent back
+to the application. Otherwise, the application receives an error message
+directly. This way, the application does not need to check for the presence of
+the Extended Desktop itself and only needs to communicate with the System
+Manager.
+-------------------------------------------------------------------------------
+Name            SySystem_LNGLOD
+Input           IXL= application's default language ID
+                IXH= pack number
+                IYL= version number
+                A  = application path bank
+                DE = application path address
+                C  = text bank
+                HL = text address
+Output          A  = Success status
+                     0 -> service not available
+                     1 -> OK, the required language package has either been
+                          loaded successfully, or the application's default
+                          language matches the required language
+                     2 -> disc error
+                     3 -> wrong version or pack number too high
+                     4 -> language not available
+Destroyed       F,BC,DE,HL,IX,IY
+Description     Tries to replace the default language of the application with
+                the alternative language, set by the user in the control panel,
+                from the application's language pack (*.LNG) file. The path
+                does not need to contain the exact LNG filename, as the
+                function always replaces the file extension with "LNG".
+                Therefore, you can usually just use the application's original
+                path, which will not change when returning from the function.
+                The text bank and address must point to the first entry in the
+                text pointer list, which must be located directly before the
+                section containing the text strings. Each text pointer is 3
+                bytes in size: a byte with the value 1, followed by a word that
+                references the text string. The number of text pointers must
+                correspond to the number of texts in the respective package.
+                The package number selects the text package if multiple text
+                locations exist, whether in different memory areas or in
+                multiple binaries of the same application. The version number
+                helps avoid conflicts that can arise if different versions of
+                the application binary and its language pack file (LNG) are
+                accidentally present. The application's default language ID is
+                used to check whether a text exchange is even necessary.
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+LANGUAGE PACK FILE FORMAT (*.LNG)
+
+...
+-------------------------------------------------------------------------------
+Header
+
+00  1B  version of this language pack file (to avoid conflicts, if there are
+        accidentally different versions of the application binary and its
+        language pack file present)
+01  1B  number of languages
+02  1B  number of packs
+
+[number of packs] * [
+00  1W  maximum length of one set of text pointers and strings in this pack
+02  1W  number of text strings in this pack
+04  1W  offset of pack information from file begin
+]
+-------------------------------------------------------------------------------
+Pack information
+
+[number of languages] * [
+00  1B  language ID
+01  1W  offset of language set from file begin
+]
+-------------------------------------------------------------------------------
+Language set
+
+(this part is compressed)
+
+[number of texts] * [
+00  1B  1
+01  1W  text offset within this language set
+]
+[number of texts] * [
+??  ?B  text string
+]
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+LANGUAGE IDS
+
+This is a list of all possible languages. The 8bit IDs are mostly identical to
+the Microsoft "Windows Language Code Identifiers" (MS-LCID).
+-------------------------------------------------------------------------------
+| ID  639-2   Language                 | ID  639-2   Language                 |
+-------------------------------------------------------------------------------
+| #01   ara   Arabic                   | #46   pan   Punjabi                  |
+| #02   bul   Bulgarian                | #47   guj   Gujarati                 |
+| #03   cat   Catalan                  | #48   ori   Odia                     |
+| #04   zho   Chinese                  | #49   tam   Tamil                    |
+| #05   ces   Czech                    | #4A   tel   Telugu                   |
+| #06   dan   Danish                   | #4B   kan   Kannada                  |
+| #07   deu   German                   | #4C   mal   Malayalam                |
+| #08   ell   Greek                    | #4D   asm   Assamese                 |
+| #09   eng   English                  | #4E   mar   Marathi                  |
+| #0A   spa   Spanish                  | #4F   san   Sanskrit                 |
+| #0B   fin   Finnish                  | #50   mon   Mongolian                |
+| #0C   fra   French                   | #51   bod   Tibetan                  |
+| #0D   heb   Hebrew                   | #52   cym   Welsh                    |
+| #0E   hun   Hungarian                | #53   khm   Khmer                    |
+| #0F   isl   Icelandic                | #54   lao   Lao                      |
+| #10   ita   Italian                  | #55   mya   Burmese                  |
+| #11   jpn   Japanese                 | #56   glg   Galician                 |
+| #12   kor   Korean                   | #57   kok   Konkani                  |
+| #13   nld   Dutch                    | #58   mni   Manipuri                 |
+| #14   nor   Norwegian                | #59   snd   Sindhi                   |
+| #15   pol   Polish                   | #5A   syc   Syriac (Classical)       |
+| #16   por   Portuguese               | #5B   sin   Sinhala                  |
+| #17   roh   Romansh                  | #5C   chr   Cherokee                 |
+| #18   ron   Romanian                 | #5D   iku   Inuktitut                |
+| #19   rus   Russian                  | #5E   amh   Amharic                  |
+| #1A   hrv   Croatian                 | #5F   tzm   Central Atlas Tamazight  |
+| #1B   slk   Slovak                   | #60   kas   Kashmiri                 |
+| #1C   sqi   Albanian                 | #61   nep   Nepali                   |
+| #1D   swe   Swedish                  | #62   fry   Western Frisian          |
+| #1E   tha   Thai                     | #63   pus   Pashto                   |
+| #1F   tur   Turkish                  | #64   fil   Filipino                 |
+| #20   urd   Urdu                     | #65   div   Dhivehi                  |
+| #21   ind   Indonesian               | #66   bin   Bini / Edo               |
+| #22   ukr   Ukrainian                | #67   ful   Fulah                    |
+| #23   bel   Belarusian               | #68   hau   Hausa                    |
+| #24   slv   Slovenian                | #69   ibb   Ibibio                   |
+| #25   est   Estonian                 | #6A   yor   Yoruba                   |
+| #26   lav   Latvian                  | #6B   quz   Quechua (Cusco)          |
+| #27   lit   Lithuanian               | #6C   nso   Northern Sotho           |
+| #28   tgk   Tajik                    | #6D   bak   Bashkir                  |
+| #29   fas   Persian                  | #6E   ltz   Luxembourgish            |
+| #2A   vie   Vietnamese               | #6F   kal   Greenlandic              |
+| #2B   hye   Armenian                 | #70   ibo   Igbo                     |
+| #2C   azj   Azerbaijani (Noh)        | #71   kau   Kanuri                   |
+| #2D   eus   Basque                   | #72   orm   Oromo                    |
+| #2E   hsb   Upper Sorbian            | #73   tir   Tigrinya                 |
+| #2F   mkd   Macedonian               | #74   grn   Guarani                  |
+| #30   sot   Southern Sotho           | #75   haw   Hawaiian                 |
+| #31   tso   Tsonga                   | #76   lat   Latin                    |
+| #32   tsn   Tswana                   | #77   som   Somali                   |
+| #33   ven   Venda                    | #78   iii   Sichuan Yi               |
+| #34   xho   Xhosa                    | #79   pap   Papiamento               |
+| #35   zul   Zulu                     | #7A   arn   Mapudungun               |
+| #36   afr   Afrikaans                | #7C   moh   Mohawk                   |
+| #37   kat   Georgian                 | #7E   bre   Breton                   |
+| #38   fao   Faroese                  | #80   uig   Uyghur                   |
+| #39   hin   Hindi                    | #81   mri   Maori                    |
+| #3A   mlt   Maltese                  | #82   oci   Occitan                  |
+| #3B   sme   Northern Sami            | #83   cos   Corsican                 |
+| #3C   gle   Irish                    | #84   gsw   Swiss German / Alemannic |
+| #3D   yid   Yiddish                  | #85   sah   Yakut                    |
+| #3E   msa   Malay                    | #86   qut   K'iche' (Guatemala)      |
+| #3F   kaz   Kazakh                   | #87   kin   Kinyarwanda              |
+| #40   kir   Kyrgyz                   | #88   wol   Wolof                    |
+| #41   swa   Swahili                  | #8C   prs   Dari (Afghan Persian)    |
+| #42   tuk   Turkmen                  | #91   gla   Scottish Gaelic          |
+| #43   uzb   Uzbek                    | #92   kur   Kurdish                  |
+| #44   tat   Tatar                    | #93   quc   K'iche'                  |
+| #45   ben   Bengali                  |                                      |
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+CODEPAGES
+
+The following codepages with international character sets are currently available.
+
+02 - LATIN 1    (Windows CP 1252 + turkish characters)
+
+     Afrikaans, Basque, Catalan, Danish, Dutch, English, Faroese, Filipino,
+     French, Galician, German, Icelandic, Indonesian, Irish, Italian,
+     Luxembourgish, Malay, Norwegian, Occitan, Portuguese, Scottish Gaelic,
+     Spanish, Swahili, Swedish, Tagalog, Turkish, Welsh
+
+03 - JAPANESE   (mostly MSX identical character set)
+     Japanese
+
+04 - CHEROKEE   (cherokee alphabet at #8A-#9F, #C0-#FF)
+     Cherokee
+
+05 - GREEK      (Windows CP 1253)
+     Greek
+
+06 - CYRILLIC   (Windows CP 1251 + hryvnia sign)
+     Abkhaz, Bashkir, Belarusian, Bulgarian, Buryat, Chechen, Ingush,
+     Kabardian, Kalmyk, Karachay-Balkar, Kazakh, Kyrgyz, Macedonian, Mongolian,
+     Ossetian, Russian, Serbian, Tajik, Tatar, Tuvan, Ukrainian, Yakut
+-------------------------------------------------------------------------------
+
+
+===============================================================================
+UNICODE IDS
+
+see "SymbOS-Multilingual-Characters.txt"
+-------------------------------------------------------------------------------

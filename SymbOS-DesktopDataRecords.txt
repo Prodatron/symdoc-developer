@@ -1199,7 +1199,7 @@ pointers:
 - control 01 (PLT) paint_text
 - control 03 (PLX) paint_frame_with_title
 - control 05 (PLA) paint_text_with_alternative_font
-- control 06 (PLC) paint_text_with_control_codes (only for code 07, see note below)
+- control 06 (PLC) paint_text_with_control_codes [for code 07, see note below]
 - control 09 (ICT) graphic_with_text
 - control 17 (BTC) button_check
 - control 18 (BTR) button_radio
@@ -1232,7 +1232,7 @@ which are updated with each new version anyway.
 
 Here is a list of all changes:
 
-- control 06 (PLC) "paint_text_with_control_codes"
+- control 06 (PLC) "PAINT_TEXT_WITH_CONTROL_CODES"
   - the use of code 01 (pen/paper setting) in the first byte is no longer
     permitted
   - codes for enabling/disabling underlining (03, 04) have been replaced by a
@@ -1241,16 +1241,20 @@ Here is a list of all changes:
   - codes for inserting dynamic whitespace have been limited from 12–31 to
     12–28, allowing a maximum insertion of 20 pixels (29, 30, 31 now draw
     system characters)
+  (only used in old alpha versions of SymZilla)
 
-- control 33 (TXB) "textinput_box"
+- control 33 (TXB) "TEXTINPUT_BOX"
   - command codes for "set cursor", "get cursor" and "reformat text" have been
     reassigned from 29–31 to 248–250; see control description
+  (only used in Notepad, Wordpad)
 
-- control 44 (TRE) "tree_content"
+- control 44 (TRE) "TREE_CONTENT"
   - status characters for showing a leaf, a collapsed node and an expanded node
     have been reassigned from 127, 129, 130 to 29, 30, 31; see control
     description
+  (not used at all before 4.1)
 
-- fonts containing characters beyond 127 must have the "255 characters" flag
+- FONTS containing characters beyond 127 must have the "255 characters" flag
   (bit 7 in header byte 0) set; otherwise, the system would display "?" symbols
   for characters 128 and above
+  (used in Notepad, Wordpad, Help Browser)
