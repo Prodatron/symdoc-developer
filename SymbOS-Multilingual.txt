@@ -1,6 +1,6 @@
 S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
 Author: Prodatron / SymbiosiS
-Date:   05.03.2026
+Date:   09.03.2026
 ===============================================================================
 
 M U L T I L I N G U A L   S U P P O R T
@@ -327,7 +327,12 @@ available. See "SymbOS-Multilingual-Codepages.txt" for details.
 06 - CYRILLIC   (Windows CP 1251 + hryvnia sign)
      Abkhaz, Bashkir, Belarusian, Bulgarian, Buryat, Chechen, Ingush,
      Kabardian, Kalmyk, Karachay-Balkar, Kazakh, Kyrgyz, Macedonian, Mongolian,
-     Ossetian, Russian, Serbian, Tajik, Tatar, Tuvan, Ukrainian, Yakut
+     Ossetian, Russian, Serbian (Cyrillic), Tajik, Tatar, Tuvan, Ukrainian,
+     Yakut
+
+07 - LATIN 2    (Windows CP 1250)
+     Albanian, Bosnian, Croatian, Czech, Hungarian, Polish, Romanian, Serbian
+     (Latin), Slovak, Slovenian
 -------------------------------------------------------------------------------
 
 
