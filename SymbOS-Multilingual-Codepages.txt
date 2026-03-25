@@ -1,6 +1,6 @@
 ﻿S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
 Author: Prodatron / SymbiosiS
-Date:   08.03.2026
+Date:   12.03.2026
 ===============================================================================
 
 C O D E P A G E S
@@ -20,7 +20,7 @@ NBS - non breakable space (160)
 
 ===============================================================================
 
-02 - LATIN 1    (Windows CP 1252 + turkish characters at 81,90,8D,9D,8F,AD)
+02 - LATIN 1    (Windows CP 1252 + turkish charact. at #81,#90,#8D,#9D,#8F,#AD)
 
      Afrikaans, Basque, Catalan, Danish, Dutch, English, Faroese, Filipino,
      French, Galician, German, Icelandic, Indonesian, Irish, Italian,
@@ -54,17 +54,17 @@ NBS - non breakable space (160)
 
        |   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
      --+------------------------------------------------------------------
-     0 |   EOL POI 火   水   木   金   土   日   年   円   LF  分   秒   CR  千   万   
-     1 |   π   月   大   中   小   時   百   ¥   SYS SYS SYS SYS SYS SYS SYS SYS
+     0 |   EOL POI 月   火   水   木   金   土   日   時   LF  分   秒   CR  年   円   
+     1 |                                   SYS SYS SYS SYS SYS SYS SYS SYS
      2 |   SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
      3 |   0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
      4 |   @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
      5 |   P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
      6 |   `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
      7 |   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
-     8 |                           を   ぁ   ぃ   ぅ   ぇ   ぉ   ゃ   ゅ   ょ   っ   
-     9 |       あ   い   う   え   お   か   き   く   け   こ   さ   し   す   せ   そ   
-     A |   NBS 。   「   」   、   ・   ヲ   ァ   ィ   ゥ   ェ   ォ   ャ   ュ   ョ   ッ   
+     8 |   大   中   小   百   千   万   を   ぁ   ぃ   ぅ   ぇ   ぉ   ゃ   ゅ   ょ   っ   
+     9 |   ・   あ   い   う   え   お   か   き   く   け   こ   さ   し   す   せ   そ   
+     A |   NBS 。   「   」   、   ¥   ヲ   ァ   ィ   ゥ   ェ   ォ   ャ   ュ   ョ   ッ   
      B |   ー   ア   イ   ウ   エ   オ   カ   キ   ク   ケ   コ   サ   シ   ス   セ   ソ   
      C |   タ   チ   ツ   テ   ト   ナ   ニ   ヌ   ネ   ノ   ハ   ヒ   フ   ヘ   ホ   マ   
      D |   ミ   ム   メ   モ   ヤ   ユ   ヨ   ラ   リ   ル   レ   ロ   ワ   ン   ゙   ゚   
@@ -73,32 +73,7 @@ NBS - non breakable space (160)
 
 ===============================================================================
 
-04 - CHEROKEE   (cherokee alphabet at C0-FF,90-9F,8A-8F)
-
-     Cherokee
-
-       |   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-     --+------------------------------------------------------------------
-     0 |   EOL POI                                 LF          CR       
-     1 |                                   SYS SYS SYS SYS SYS SYS SYS SYS
-     2 |   SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
-     3 |   0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
-     4 |   @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
-     5 |   P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
-     6 |   `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
-     7 |   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
-     8 |   €       ‚   ƒ   „   …   †   ‡   ˆ   ‰   Ᏸ   Ᏹ   Ᏺ   Ᏻ   Ᏼ   Ᏽ   
-     9 |   Ꮰ   Ꮱ   Ꮲ   Ꮳ   Ꮴ   Ꮵ   Ꮶ   Ꮷ   Ꮸ   Ꮹ   Ꮺ   Ꮻ   Ꮼ   Ꮽ   Ꮾ   Ꮿ   
-     A |   NBS ¡   ¢   £   ¤   ¥   ¦   §   ¨   ©   ª   «   ¬   –   ®   ¯
-     B |   °   ±   ²   ³   ´   µ   ¶   ·   ¸   ¹   º   »   ¼   ½   ¾   ¿
-     C |   Ꭰ   Ꭱ   Ꭲ   Ꭳ   Ꭴ   Ꭵ   Ꭶ   Ꭷ   Ꭸ   Ꭹ   Ꭺ   Ꭻ   Ꭼ   Ꭽ   Ꭾ   Ꭿ   
-     D |   Ꮀ   Ꮁ   Ꮂ   Ꮃ   Ꮄ   Ꮅ   Ꮆ   Ꮇ   Ꮈ   Ꮉ   Ꮊ   Ꮋ   Ꮌ   Ꮍ   Ꮎ   Ꮏ  
-     E |   Ꮐ   Ꮑ   Ꮒ   Ꮓ   Ꮔ   Ꮕ   Ꮖ   Ꮗ   Ꮘ   Ꮙ   Ꮚ   Ꮛ   Ꮜ   Ꮝ   Ꮞ   Ꮟ   
-     F |   Ꮠ   Ꮡ   Ꮢ   Ꮣ   Ꮤ   Ꮥ   Ꮦ   Ꮧ   Ꮨ   Ꮩ   Ꮪ   Ꮫ   Ꮬ   Ꮭ   Ꮮ   Ꮯ   
-
-===============================================================================
-
-05 - GREEK      (Windows CP 1253)
+04 - GREEK      (Windows CP 1253)
 
      Greek
 
@@ -123,7 +98,32 @@ NBS - non breakable space (160)
 
 ===============================================================================
 
-06 - CYRILLIC   (Windows CP 1251 + hryvnia sign at 98)
+05 - CHEROKEE   (cherokee alphabet at #C0-FF,#90-9F,#8A-8F)
+
+     Cherokee
+
+       |   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+     --+------------------------------------------------------------------
+     0 |   EOL POI                                 LF          CR       
+     1 |                                   SYS SYS SYS SYS SYS SYS SYS SYS
+     2 |   SPC !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+     3 |   0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+     4 |   @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+     5 |   P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+     6 |   `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+     7 |   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   DEL
+     8 |   €       ‚   ƒ   „   …   †   ‡   ˆ   ‰   Ᏸ   Ᏹ   Ᏺ   Ᏻ   Ᏼ   Ᏽ   
+     9 |   Ꮰ   Ꮱ   Ꮲ   Ꮳ   Ꮴ   Ꮵ   Ꮶ   Ꮷ   Ꮸ   Ꮹ   Ꮺ   Ꮻ   Ꮼ   Ꮽ   Ꮾ   Ꮿ   
+     A |   NBS ¡   ¢   £   ¤   ¥   ¦   §   ¨   ©   ª   «   ¬   –   ®   ¯
+     B |   °   ±   ²   ³   ´   µ   ¶   ·   ¸   ¹   º   »   ¼   ½   ¾   ¿
+     C |   Ꭰ   Ꭱ   Ꭲ   Ꭳ   Ꭴ   Ꭵ   Ꭶ   Ꭷ   Ꭸ   Ꭹ   Ꭺ   Ꭻ   Ꭼ   Ꭽ   Ꭾ   Ꭿ   
+     D |   Ꮀ   Ꮁ   Ꮂ   Ꮃ   Ꮄ   Ꮅ   Ꮆ   Ꮇ   Ꮈ   Ꮉ   Ꮊ   Ꮋ   Ꮌ   Ꮍ   Ꮎ   Ꮏ  
+     E |   Ꮐ   Ꮑ   Ꮒ   Ꮓ   Ꮔ   Ꮕ   Ꮖ   Ꮗ   Ꮘ   Ꮙ   Ꮚ   Ꮛ   Ꮜ   Ꮝ   Ꮞ   Ꮟ   
+     F |   Ꮠ   Ꮡ   Ꮢ   Ꮣ   Ꮤ   Ꮥ   Ꮦ   Ꮧ   Ꮨ   Ꮩ   Ꮪ   Ꮫ   Ꮬ   Ꮭ   Ꮮ   Ꮯ   
+
+===============================================================================
+
+06 - CYRILLIC   (Windows CP 1251 + hryvnia sign at #98)
 
      Abkhaz, Bashkir, Belarusian, Bulgarian, Buryat, Chechen, Ingush,
      Kabardian, Kalmyk, Karachay-Balkar, Kazakh, Kyrgyz, Macedonian, Mongolian,

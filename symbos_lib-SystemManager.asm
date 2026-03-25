@@ -460,7 +460,7 @@ SySystem_LNGLOD
 ;***                The text bank and address must point to the first entry in the
 ;***                text pointer list, which must be located directly before the
 ;***                section containing the text strings. Each text pointer is 3
-;***                bytes in size: a byte with the value 1, followed by a word that
+;***                bytes in size. A byte with the value 1, followed by a word that
 ;***                references the text string. The number of text pointers must
 ;***                correspond to the number of texts in the respective package.
 ;***                The package number selects the text package if multiple text

@@ -89,34 +89,34 @@ CORE AREA PART
 
 *** MISCELLANEOUS (2) AND DESKTOP LINKS (1) ***
 0237   1B  SYMBOS.INI drive ("A",...)
-0238   1B  setting flags (1)
+0238   1B  setting flags 1
            [bit0]  =autosave config
            [bit1]  =use maximum memory for file selection dialog
            [bit2]  =alternative start menu button
-           [bit3]  =run autoexec when booting                                   NEW IN S2[moved from 310] (##!!##todo CP)
+           [bit3]  =run autoexec when booting                                   NEW IN S2[moved from 310]
            [bit4]  =50Hz(0)/60Hz(1)                                             NEW IN S2
-           [bit5-7]=*reserved*
-0239   1B  setting flags (2)
+           [bit5-7]=*reserved* (0)
+0239   1B  setting flags 2
            [bit0]  =load SymbOS extended desktop
-           [bit1-7]=*reserved*
+           [bit1-7]=*reserved* (0)
 0240   1B  hardware flags
            [bit0]  =mouse
            [bit1]  =realtime clock
-           [bit2]  =mass storage device
+           [bit2]  =fast mass storage device
            [bit3]  =GFX9000
-           [bit4-7]=*reserved*
+           [bit4-7]=*reserved* (0)
 0241   1B  virtual desktop (0=no virtual desktop,
            [bit0-3] -> X-resolution, 1=512, 2=1024,
            [bit4-7] -> Y-resolution, not yet defined)
 0242   1B  number of desktop icons
 0243   1B  number of start menu/programs entries
-0244   1B  property flags                                                       NEW IN S2[was: number of systray entries]
+0244   1B  capability flags                                                     NEW IN S2[was: number of systray entries]
            [bit0]  =long filename support                                       NEW IN S2
            [bit1]  =internal 255 char font                                      NEW IN S2
-           [bit2-4]=*reserved*
-           [bit5-6]=background image size (0=320x200, 1=512x212, 2=*res*,       NEW IN S2[moved from 245] (##!!##todo SYMSEE)
+           [bit2-4]=*reserved* (0)
+           [bit5-6]=background image size (0=320x200, 1=512x212, 2=*res*,       NEW IN S2[moved from 245]
                                            3=platform specific)
-           [bit7]  =*reserved*
+           [bit7]  =*reserved* (0)
 0245   1B  [bit0-6]=machine type
                     0=CPC 464, 1=CPC 664, 2=CPC 6128, 3=CPC 464+, 4=CPC 6128+,
                     6=Enterprise,
@@ -132,7 +132,7 @@ CORE AREA PART
 0246  16W  desktop icon positions; for each of the 8 icons there are two words,
            the first contains the X-, the second the Y-position
 0278  32B  path and filename of the autoexec command line file
-0310   1B  writing system of loaded font (0=simple ascii, 2=latin, ...)         NEW IN S2[moved to 238]
+0310   1B  writing system of loaded font (0=simple ascii, 2=latin1, ...)        NEW IN S2[moved to 238]
 -------------------------------------------------------------------------------
 
 
@@ -193,12 +193,14 @@ This area is currently not used and has a size of 0 bytes.
 ===============================================================================
 FONT
 -------------------------------------------------------------------------------
-0000   1B  always 72; char height in pixel (+8), small font (+64)
-0001   1B  1 or 32; number of the first defined char
-0002 ???B  char width/bitmaps (99 x 9 or 255 x 9 bytes)
+0000   1B  40 or 168; char height in pixel (+8), small font (+32), 127 (+0) or
+           255 chars (+128)
+0001   1B  28 or 1; number of the first defined char
+0002 ???B  char width/bitmaps (100 x 9 or 255 x 9 bytes)
            00   1B  char width
            01   8B  char bitmap
-           font may contain 99 or 255 chars, see CORE AREA PART byte 244, bit 1
+           font may contain 100 or 255 chars,
+           see CORE AREA PART byte 244, bit 1
 -------------------------------------------------------------------------------
 
 

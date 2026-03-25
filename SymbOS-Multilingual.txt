@@ -1,6 +1,6 @@
 S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
 Author: Prodatron / SymbiosiS
-Date:   09.03.2026
+Date:   12.03.2026
 ===============================================================================
 
 M U L T I L I N G U A L   S U P P O R T
@@ -171,7 +171,7 @@ Description     Tries to replace the default language of the application with
                 The text bank and address must point to the first entry in the
                 text pointer list, which must be located directly before the
                 section containing the text strings. Each text pointer is 3
-                bytes in size: a byte with the value 1, followed by a word that
+                bytes in size. A byte with the value 1, followed by a word that
                 references the text string. The number of text pointers must
                 correspond to the number of texts in the respective package.
                 The package number selects the text package if multiple text
@@ -318,11 +318,11 @@ available. See "SymbOS-Multilingual-Codepages.txt" for details.
 03 - JAPANESE   (mostly MSX identical character set)
      Japanese
 
-04 - CHEROKEE   (cherokee alphabet at #8A-#9F, #C0-#FF)
-     Cherokee
-
-05 - GREEK      (Windows CP 1253)
+04 - GREEK      (Windows CP 1253)
      Greek
+
+05 - CHEROKEE   (cherokee alphabet at #8A-#9F, #C0-#FF)
+     Cherokee
 
 06 - CYRILLIC   (Windows CP 1251 + hryvnia sign)
      Abkhaz, Bashkir, Belarusian, Bulgarian, Buryat, Chechen, Ingush,

@@ -1,6 +1,6 @@
 S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
 Author: Prodatron / Symbiosis
-Date:   31.01.2026
+Date:   16.03.2026
 ===============================================================================
 
 D E S K T O P   M A N A G E R   D A T A   R E C O R D S
@@ -929,12 +929,12 @@ as a CPC/PCW/EP system is not able to handle such graphics!
 The following is a description of the CPC encoding format. Each byte contains
 4 pixels:
 bit7 = bit0 of pixel0 (left pixel)
-bit6 = bit0 of pixel1 (second..)
-bit5 = bit0 of pixel2 (third..)
+bit6 = bit0 of pixel1
+bit5 = bit0 of pixel2
 bit4 = bit0 of pixel3 (right pixel)
 bit3 = bit1 of pixel0 (left pixel)
-bit2 = bit1 of pixel1 (second..)
-bit1 = bit1 of pixel2 (third..)
+bit2 = bit1 of pixel1
+bit1 = bit1 of pixel2
 bit0 = bit1 of pixel3 (right pixel)
 
 Or you can see it like this:
@@ -1152,8 +1152,8 @@ The writing system IDs are:
 05 - cherokee   (#c0-#ff=UC#13a0-#13df, #90-#9f=UC#13e0-#13ef,
                  #8a-#8f=UC#13f0-#13f5, all others are CP1252 characters)
 06 - cyrillic   (=codepage 1251)
+07 - latin2     (=codepage 1250)
 Scheduled:
-07 - latin2     (=codepage 1250) [N/A]
 08 - hebrew     (=codepage 1255) [N/A]
 09 - arabic     (=codepage 1256) [N/A]
 -------------------------------------------------------------------------------
@@ -1226,18 +1226,18 @@ BACKWARD INCOMPATIBILITY BETWEEN SYMBOS 4.1 AND OLDER VERSIONS
 ===============================================================================
 SymbOS 4.1 introduced new functions for displaying large fonts and processing
 multilingual GUI text. For optimal implementation some minor changes were
-necessary, which make some controls and data structures backward incompatible
-to older SymbOS versions. Only system and standard applications were affected,
-which are updated with each new version anyway.
+necessary, which make some controls and data structures partially backward
+incompatible to older SymbOS versions. Only system and standard applications
+were affected, which are updated with each new version anyway.
 
-Here is a list of all changes:
+List of all changes:
 
 - control 06 (PLC) "PAINT_TEXT_WITH_CONTROL_CODES"
   - the use of code 01 (pen/paper setting) in the first byte is no longer
     permitted
   - codes for enabling/disabling underlining (03, 04) have been replaced by a
     code for setting flags (03), one of which represents the underlining mode;
-    code 04 is currently undefined
+    code 04 is currently unused
   - codes for inserting dynamic whitespace have been limited from 12–31 to
     12–28, allowing a maximum insertion of 20 pixels (29, 30, 31 now draw
     system characters)
