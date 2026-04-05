@@ -164,10 +164,12 @@ will be started.
 040   1B    Flags
             [bit0]=1 16 colour icon included
             [bit1]=1 relocator table is packed
-            [bit7]=1 code part is compressed
-            [bit6]=1 data part is compressed
-            [bit5]=1 transfer part is compressed
+            [bit2]=*RESERVED* (must be 0)
+            [bit3]=*RESERVED* (must be 0)
             [bit4]=1 relocator table is compressed
+            [bit5]=1 transfer part is compressed
+            [bit6]=1 data part is compressed
+            [bit7]=1 code part is compressed
 041   1W    16 colour icon file offset (if the file were uncompressed)
 043   5B    *RESERVED* (must be 0)
 048   8B    SymbOS executable file identification
@@ -198,11 +200,20 @@ of the area. You will need to calculate the address first inside the code.
 After the application has been initialized and started, some parts of the
 header have been replaced by new data.
 -------------------------------------------------------------------------------
+000   1W    Total length of the code area (including additional area)
+002   1W    Total length of the data area (including additional area)
+004   1W    Total length of the transfer area (including additional area)
 006   1W    Address of the data area
 008   1W    Address of the transfer area
 010   4B    Additional sub process or timer IDs; 4 process/timer IDs can be
             registered here
 014   1B    Ram bank number (1-15), where the application is located
+040   6B    *RESERVED*
+046   1B    Flags
+            [bit0]=1 start-in path (up to 128bytes including 0-terminator)
+                     available at offset 128 behind the code area
+047   1B    window mode (0=unchanged, 1=normal, 2=maximized, 3=minimized,
+                         +128=open window centered)
 048  40B    Additional memory areas; 8 memory areas can be registered here,
             each entry consists of 5 bytes:
             00  1B  Ram bank number (1-15; if 0, the entry will be ignored)
@@ -216,7 +227,13 @@ to other processes. The application ID is needed at least, when the application
 wants to quit itself. The ram bank number is needed for all kind of system
 calls, where a memory pointer is needed.
 
-The bytes at 10 and 48 should be used for registering additionally allocated
+The byte at address 047 contains the user setting for the application window's
+opening mode. It's not mandatory, but can be used to specify how the main
+window opens. If it is 0, you open the window in your preferred way; otherwise,
+this value should override the main window's default status byte before opening
+(see SymbOS-DesktopDataRecords.txt, "Window Record", byte 00 "Status").
+
+The bytes at 010 and 048 should be used for registering additionally allocated
 memory areas and IDs of sub processes and timers. Only if the application
 writes these information in the header, the system manager will release the
 memory and/or stop the sub processes and/or timers automatically by itself,
@@ -317,7 +334,7 @@ icon_offset(executable_file)
 ```
 
 
-Path and appended parameters
+Pathes and appended parameters
 
 When the system managers loads an application, it appends 256 bytes directly
 behind the end of the static code area. Here you find the complete command
@@ -332,6 +349,11 @@ when calling the application.
 As your code area can be extended by additional reserved memory (see 056 in the
 header) the total additional memory is the maximum of 256 and the value at 056
 in the header.
+
+If the start-in path is available (see bit0 of 046 in the header after
+initialization), you will find it at offset 128 inside the additional 256 bytes
+behind the code area. It has a maximum size of 128bytes including the 0-
+terminator.
 
 
 CPU register usage

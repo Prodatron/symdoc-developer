@@ -42,8 +42,21 @@ SySystem_PRGRUN
 ;*** Name           Program_Run_Command
 ;*** Input          HL = File path and name address
 ;***                A  = [Bit0-3] File path and name ram bank (0-15)
+;***                     [Bit4  ] Flag, if additional options
+;***                     [Bit5  ] Flag, if alternative priority
+;***                     [Bit6  ] Flag, if always start as an application
+;***                              (ignore file associations)
 ;***                     [Bit7  ] Flag, if system error message should be
 ;***                              suppressed
+;***                - if alternative priority:
+;***                E  = priority (1[high] - 7[low])
+;***                - if additional options:
+;***                IXL= [Bit0]   Flag, if Start-In path available
+;***                IXH= Window Mode (0=unchanged, 1=normal, 2=maximized,
+;***                                  3=minimized, +128=open window centered)
+;***                - if Start-In path available:
+;***                IY = Start-In path (up to 128bytes including 0-terminator),
+;***                     same ram bank like file path
 ;*** Output         A  = Success status
 ;***                     0 = OK
 ;***                     1 = File does not exist
@@ -66,6 +79,7 @@ SySystem_PRGRUN
 ;***                because of loading problems L contains the file manager
 ;***                error code.
 ;******************************************************************************
+        call SySSMg2
         ld c,MSC_SYS_PRGRUN
         call SySystem_WaitMessage
         ld hl,(App_MsgBuf+8)
@@ -481,6 +495,43 @@ SySystem_LNGLOD
 endif
 
 
+;******************************************************************************
+;*** Name           Macro_APPINI
+;*** Input          0/main window data record
+;***                0/default path
+;*** Destroyed      AF,BC,DE,HL
+;*** Description    ...
+;******************************************************************************
+macro SyMacro_APPINI window_record, startin_path
+    if "window_record" = "0"
+    else
+        ld hl,window_record
+        ld a,(App_BegCode+47)
+        or a
+        jr z,@appini1
+        ld (hl),a
+        @appini1
+    endif
+    if "startin_path" = "0"
+    else
+        ld a,(App_BegCode+46)
+        bit 0,a
+        jr z,@appini2
+        ld hl,(App_BegCode)
+        ld bc,App_BegCode
+        add hl,bc
+        ld bc,128
+        sbc hl,bc
+        ld de,startin_path
+        ldir
+        @appini2
+    endif
+mend
+
+
+
+
+
 ;### SUB ROUTINES #############################################################
 
 SySystem_SendMessage
@@ -503,18 +554,19 @@ SysSMg0 ld (App_MsgBuf+1),hl
 SySSMg1 ld (App_MsgBuf+6),a
         ld (App_MsgBuf+7),bc
         ld (App_MsgBuf+8),hl
-        ld (App_MsgBuf+10),ix
+SySSMg2 ld (App_MsgBuf+10),ix
         ld (App_MsgBuf+12),iy
         ret
 
 SySystem_WaitMessage
 ;******************************************************************************
-;*** Input          -
+;*** Input          C       = Command
+;***                HL,A,DE = additional Parameters
 ;*** Output         IY = message buffer
 ;***                A  = first byte in the Message buffer (IY+0)
 ;*** Destroyed      AF,BC,DE,HL,IX,IY
-;*** Description    Sends a message to the desktop manager, which includes the
-;***                window ID and additional parameters
+;*** Description    Sends a message to the System Manager and waits for
+;***                response
 ;******************************************************************************
         ld (App_MsgBuf+3),a
         ld a,c

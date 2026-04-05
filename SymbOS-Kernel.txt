@@ -103,15 +103,16 @@ Example:        rst #20:dw #8130
 -------------------------------------------------------------------------------
 Address:        RST #28 (BNKFCL)
 Name:           Banking_FastCall
-Input:          HL       = Destination address
-                DE,IX,IY = Registers for the destination routine
-Output:         DE,IX,IY = Registers from the destination routine
-Destroyed:      AF,BC,HL
+Input:          HL          = Destination address
+                DE,IX,IY    = Registers for the destination routine
+Output:         DE,HL,IX,IY = Registers from the destination routine
+Destroyed:      AF,BC
 Description:    Calls a routine, which is placed in the first ram bank. DE,IX
-                and IY will be transfered unmodified to and from the routine.
+                and IY will be transfered unmodified to the routine, DE,HL,IX
+                and IY will be returned back.
                 It is faster than RST #20 (BNKSCL). Don't use this function, if
                 the routine does make bank switching or requires more registers
-                than DE,IX,IY.
+                than DE,[HL,]IX,IY.
 Example:        ld hl,#8109:rst #28
                 -> Calls the routine at #8109 in the first ram bank.
 -------------------------------------------------------------------------------
@@ -400,7 +401,7 @@ How to call:    ld hl,#8100:rst #28
 Input:          -
 Output:         E,IX = free memory in bytes
                 D    = number of existing 64K extended ram banks
-Destroyed:      A,BC,IY
+Destroyed:      AF,BC,IY
 Description:    Gives back the size of the total existing memory
                 (=D*65536+65536) and the amount of bytes (=E*65536+IX), which
                 are still available.
@@ -616,7 +617,7 @@ How to call:    ld hl,#8109:rst #28
 Input:          -
 Output:         IY,IX= System counter
                 DE   = Idle counter
-Destroyed:      -
+Destroyed:      AF,BC
 Description:    Gives back the system counter (=IY*65536+IX) and the counter of
                 the idle process.
                 The system counter is increased 100 times per second.

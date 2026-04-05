@@ -57,7 +57,7 @@ CORE AREA PART
                    [bit4-7]=IDE  -> channel (master=0, slave=1)
                             SCSI -> sub device (0-15)
            03  1B  *reserved* (set to 0)
-           04 12B  device name (terminated by 0)
+           04 12B  device name (0-terminated)
 
 *** DISPLAY AND MISCELLANEOUS (1) ***
 0128  17W  colour palette (the border is defined by the 17.word)
@@ -72,7 +72,7 @@ CORE AREA PART
 0163  32B  system path
 0195   1B  time zone (-12 to +12)
 0196   1B  background type (0-15=plain colour, -1=background graphic)
-0197  32B  background graphic path and filename, terminated by 0 (only, if
+0197  32B  background graphic path and filename, 0-terminated (only, if
            "background type"=-1)
 
 *** KEYBOARD (1) AND MOUSE ***
@@ -85,7 +85,7 @@ CORE AREA PART
 0234   1B  mouse double click delay (maximum time in 1/50s, when a double click
            is recognized)
 0235   1B  flag, if swap left/right mouse keys
-0236   1B  mouse wheel speed (currently only CPC-SYMBiFACE [PS/2] and MSX)
+0236   1B  mouse wheel speed
 
 *** MISCELLANEOUS (2) AND DESKTOP LINKS (1) ***
 0237   1B  SYMBOS.INI drive ("A",...)
@@ -127,12 +127,43 @@ CORE AREA PART
                     18=SymbOS Virtual Machine,
                     19=Isetta TTL computer,
                     20=ZX Spectrum Next,
-                    32=NGZ80-Evo                                                NEW IN S2[moved to 244]
+                    32=NGZ80-Evo                                                NEW IN S2[old moved to 244]
            [bit7]  =colour encoding (0=CPC, 1=MSX)
 0246  16W  desktop icon positions; for each of the 8 icons there are two words,
            the first contains the X-, the second the Y-position
 0278  32B  path and filename of the autoexec command line file
-0310   1B  writing system of loaded font (0=simple ascii, 2=latin1, ...)        NEW IN S2[moved to 238]
+0310   1B  writing system of loaded font (0=simple ascii, 2=latin1, ...)        NEW IN S2[old moved to 238]
+
+*** DEFINITIONS FOR INDEXED COLOUR MODE ***
+
+[...##!!## todo...]
+
+0311   1W  dw 1+16                     ;Border Window Title/Menu/Toolbar/Content
+0313   1W  dw 3+16+32768               ;Border Window Status
+0315   1B  db 0*16+3                   ;Text   Window Title
+0316   1B  db 2+16                     ;Text   Window Status
+0317   4B  db 0,1,2,3                  ;Graphics Window
+0321   1W  dw 256*2+3+16+32768+16384   ;Scroll1 Window
+0323   1W  dw 4096*2+512+3+16          ;Scroll2 Window
+0325   1W  dw 256*1+2                  ;Scroll3 Window
+0327   1W  dw 256*2+3+16+32768+16384   ;Border Menu Window
+0329   1B  db 16*1+2                   ;Border Menu Bar
+0330   1W  dw 256*1+3+16384            ;Border Menu Line
+0332   1W  dw 2*256+1                  ;Text   Menu Active
+0334   1W  dw 2*256+0                  ;Text   Menu Inactive
+0336   4B  db 0,1,2,3                  ;Graphics Menu (Start menu)
+0340   1B  db 1                        ;Invert Menu
+0341   1B  db 2+16                     ;Text   Taskbar
+0342   1W  dw 512+16*1+3+32768+16384   ;Border Taskbar
+0344   1W  dw 512+16*1+3+32768+16384   ;Button Taskbar
+0346   1W  dw 512+16*1+3+32768         ;Border Taskbar (Windows)
+0348   1B  db 1                        ;Invert Taskbar
+0349   1B  db 16*0+1                   ;Text   Icons
+0350   4B  db 0,1,2,3                  ;Content Window
+
+*** STARTMENU ***
+0354   1B  startmenu icon width
+0355   1W  startmenu total width including all frame lines
 -------------------------------------------------------------------------------
 
 
@@ -141,13 +172,13 @@ DATA AREA PART
 -------------------------------------------------------------------------------
 *** DESKTOP LINKS (2) ***
 0000 400B  Start menu program entry names (20 entries at 20 bytes, each
-           terminated by 0)
+           0-terminated)
 0400 640B  Start menu program entry pathes and filenames (20 entries at 32
-           bytes, each terminated by 0)
+           bytes, each 0-terminated)
 1040 256B  Desktop icon pathes and filenames (8 entries at 32 bytes, each
-           terminated by 0)
+           0-terminated)
 1296 192B  Desktop icon names (8 entries, each consists of 2 lines at 12 bytes,
-           each line is terminated by 0)
+           each line is 0-terminated)
 1488 1176B Desktop icon graphics (8 entries, each consists of the 3 bytes
            graphic header and the 144 byte (6*24) bitmap)
 
@@ -165,7 +196,7 @@ DATA AREA PART
 3432   1B  flag, if screen saver is present
 3433   1B  duration of user inactivity, after which the screen saver will be
            started
-3434  33B  screen saver application path and filename (terminated by 0)
+3434  33B  screen saver application path and filename (0-terminated)
 3467  64B  screen saver specific configuration data (can be stored and read
            here)
 
@@ -176,10 +207,14 @@ DATA AREA PART
 3771  80B  keyboard definition (alt)
 
 *** SECURITY ***
-3851  16B  security username
-3867  16B  security password
+3851  16B  security username (0-terminated)
+3867  16B  security password (0-terminated)
 3883   1B  security flags [not used yet, set to 0]
 
+*** STARTMENU ***
+3884  10B  startmenu icon extended bitmap header
+3894  64B  startmenu icon bitmap data (up to 16x8 pixels)
+3958  12B  startmenu text (0-terminated)
 -------------------------------------------------------------------------------
 
 
@@ -276,7 +311,7 @@ Output:         DE = font address
                      of 32 bytes:
                      00   1B  Version Major
                      01   1B  Version Minor
-                     02  30B  Version String (terminated by 0)
+                     02  30B  Version String (0-terminated)
 Description:    Sends back the address and total size of the font, which is
                 always placed in ram bank 0, and the address of the version
                 string, which is placed in the same ram bank like the data area
