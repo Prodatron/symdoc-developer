@@ -184,13 +184,16 @@ endif
 ifdef use_SyNet_TCPOPN
     if use_SyNet_TCPOPN=1
 ;******************************************************************************
-;*** ID             016 (TCPOPN)
-;*** Name           TCP_Open
-;*** Input          A    = Type (0=active/client, 1=passive/server)
-;***                HL   = Local port (-1=dynamic client port)
-;***                - if A is 0:
-;***                IX,IY= Remote IP
-;***                DE   = Remote port
+;*** Input          A[b0]  = Type (0=active/client, 1=passive/server)
+;***                A[b1-2]= *reserved* (set to 0)
+;***                A[b3]  = SSL (1=yes)
+;***                HL     = Local port (-1=dynamic client port)
+;***                - if A[b0] is 0:
+;***                IX,IY  = Remote IP
+;***                DE     = Remote port
+;***                - if A[b3] is 1:
+;***                A[b4-7]=bank of server host name for SSL certificate validation
+;***                BC     =bank of server host name for SSL certificate validation
 ;*** Output         CF   = Error state (0 = ok, 1 = error; A = error code)
 ;***                - if CF is 0:
 ;***                A    = Handle
@@ -547,7 +550,7 @@ ifdef use_SyNet_UDPOPN
 ;******************************************************************************
 ;*** ID             032 (UDPOPN)
 ;*** Name           UDP_Open
-;*** Input          A    = Type
+;*** Input          A    = Type (currently undefined [?], set to 0)
 ;***                HL   = Local port
 ;***                E    = Source/destination bank for receive/send
 ;*** Output         CF   = Error state (0 = ok, 1 = error; A = error code)
@@ -597,9 +600,8 @@ ifdef use_SyNet_UDPSTA
 ;***                A    = Handle
 ;***                L    = Status
 ;***                - if L is ???:
-;***                BC   = Received bytes
-;***                IX,IY= Remote IP
-;***                DE   = Remote port
+;***                H    = Number of pending input datagrams
+;***                BC   = Size of the oldest pending datagram
 ;*** Destroyed      F,BC,DE,HL,IX,IY
 ;*** Description    Returns the actual status of the UDP session. This is
 ;***                always exactly the same as received in the last event
@@ -620,15 +622,21 @@ ifdef use_SyNet_UDPRCV
 ;*** Input          A    = Handle
 ;***                HL   = Destination address
 ;***                       (bank has been specified by the UDPOPN function)
+;***                BC   = Maximum data size to retrieve
 ;*** Output         CF   = Error state (0 = ok, 1 = error; A = error code)
 ;***                - if CF is 0:
 ;***                A    = Handle
+;***                BC   = Number of transfered bytes (which have been copied
+;***                       to the destination)
+;***                IX,IY= Remote IP
+;***                DE   = Remote port
 ;*** Destroyed      F,BC,DE,HL,IX,IY
-;*** Description    Copies the package data, which has been received from a
-;***                remote host, to a specified destination in memory. Please
-;***                note, that this function will always transfer the whole
-;***                data at once, so there should be enough place at the
-;***                destination address. The destination ram bank number has
+;*** Description    Copies the data from one datagram, which has been received from
+;***                a remote host, to a specified destination in memory. Please
+;***                note, that this function will transfer not more than the
+;***                specified maximum data size to retrieve and discard the
+;***                remaining data. If there is not enough place at the destination
+;***                address data maybe lost. The destination ram bank number has
 ;***                already been specified with the UDPOPN function.
 ;******************************************************************************
 SyNet_UDPRCV

@@ -129,14 +129,19 @@ open) for connection requests from clients before a connection is established.
 ID:             016 (TCPOPN)
 Name:           TCP_Open
 Library:        SyNet_TCPOPN
-Input:          A    = Type (0=active/client, 1=passive/server)
-                HL   = Local port (-1=dynamic client port)
-                - if A is 0:
-                IX,IY= Remote IP
-                DE   = Remote port
-Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
+Input:          A[b0]  = Type (0=active/client, 1=passive/server)
+                A[b1-2]= *reserved* (set to 0)
+                A[b3]  = SSL (1=yes)
+                HL     = Local port (-1=dynamic client port)
+                - if A[b0] is 0:
+                IX,IY  = Remote IP
+                DE     = Remote port
+                - if A[b3] is 1:
+                A[b4-7]=bank of server host name for SSL certificate validation
+                BC     =bank of server host name for SSL certificate validation
+Output:         CF     = Error state (0 = ok, 1 = error; A = error code)
                 - if CF is 0:
-                A    = Handle
+                A      = Handle
 Destroyed:      F,BC,DE,HL,IX,IY
 Description:    Opens a TCP connection as a client (active) or as a server
                 (passive). If it's an active connection you have to specify
@@ -286,7 +291,7 @@ delivery, ordering, or duplicate protection.
 ID:             032 (UDPOPN)
 Name:           UDP_Open
 Library:        SyNet_UDPOPN
-Input:          A    = Type
+Input:          A    = Type (currently undefined [?], set to 0)
                 HL   = Local port
                 E    = Source/destination bank for receive/send
 Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
@@ -318,9 +323,8 @@ Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
                 A    = Handle
                 L    = Status
                 - if L is ???:
-                BC   = Received bytes
-                IX,IY= Remote IP
-                DE   = Remote port
+                H    = Number of pending input datagrams
+                BC   = Size of the oldest pending datagram
 Destroyed:      F,BC,DE,HL,IX,IY
 Description:    Returns the actual status of the UDP session. This is
                 always exactly the same as received in the last event
@@ -332,15 +336,21 @@ Library:        SyNet_UDPRCV
 Input:          A    = Handle
                 HL   = Destination address
                        (bank has been specified by the UDPOPN function)
+                BC   = Maximum data size to retrieve
 Output:         CF   = Error state (0 = ok, 1 = error; A = error code)
                 - if CF is 0:
                 A    = Handle
+                BC   = Number of transfered bytes (which have been copied
+                       to the destination)
+                IX,IY= Remote IP
+                DE   = Remote port
 Destroyed:      F,BC,DE,HL,IX,IY
-Description:    Copies the package data, which has been received from a
-                remote host, to a specified destination in memory. Please
-                note, that this function will always transfer the whole
-                data at once, so there should be enough place at the
-                destination address. The destination ram bank number has
+Description:    Copies the data from one datagram, which has been received from
+                a remote host, to a specified destination in memory. Please
+                note, that this function will transfer not more than the
+                specified maximum data size to retrieve and discard the
+                remaining data. If there is not enough place at the destination
+                address data maybe lost. The destination ram bank number has
                 already been specified with the UDPOPN function.
 -------------------------------------------------------------------------------
 ID:             036 (UDPSND)
@@ -426,7 +436,7 @@ Config_Socket   CFGSCK  003 132     A=first socket, C=number of sockets, HL=data
 
 TRANSPORTATION LAYER SERVICES
 
-TCP_Open        TCPOPN  016 144     A=mode,   HL=local port (,IX,IY=remote IP, DE=remote port)      cf=0 -> ok, A=handle
+TCP_Open        TCPOPN  016 144     A=mode,   HL=local port (,IX,IY=remo.IP, DE=remo.port, BC=SSL)  cf=0 -> ok, A=handle
 TCP_Close       TCPCLO  017 145     A=handle                                                        cf=0 -> ok, A=handle
 TCP_Status      TCPSTA  018 146     A=handle                                                        cf=0 -> ok, A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
 TCP_Receive     TCPRCV  019 147     A=handle, BC=length, E,HL=memory                                cf=0 -> ok, A=handle, BC=number of remaining bytes, ZF=1 -> all bytes have been received
@@ -439,10 +449,10 @@ TCP_Event       TCPEVT      159                                                 
 UDP_Open        UDPOPN  032 160               HL=local port, E=memory bank                          cf=0 -> ok, A=handle
 UDP_Close       UDPCLO  033 161     A=handle                                                        cf=0 -> ok, A=handle
 UDP_Status      UDPSTA  034 162     A=handle                                                        cf=0 -> ok, A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
-UDP_Receive     UDPRCV  035 163     A=handle,            HL=memory                                  cf=0 -> ok, A=handle
-UDP_Send        UDPSND  036 164     A=handle, BC=length, HL=memory, IX,IY=remote IP, DE=remote port cf=0 -> ok, A=handle
+UDP_Receive     UDPRCV  035 163     A=handle, HL=memory, BC=maximum data size to retrieve           cf=0 -> ok, A=handle, IX,IY=remote IP, DE=remote port
+UDP_Send        UDPSND  036 164     A=handle, HL=memory, BC=length, IX,IY=remote IP, DE=remote port cf=0 -> ok, A=handle
 UDP_Skip        UDPSKP  037 165     A=handle                                                        cf=0 -> ok, A=handle
-UDP_Event       UDPEVT      175                                                                                 A=handle, L=status (, BC=received bytes, IX,IY=remote IP, DE=remote port)
+UDP_Event       UDPEVT      175                                                                                 A=handle, L=status (, H=number of pending input datagrams, BC=oldest pending datagram size)
 
 APPLICATION LAYER SERVICES
 

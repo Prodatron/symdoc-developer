@@ -64,7 +64,7 @@ Name:           Device_ScreenMode
 How to call:    ld hl,#8139:rst #28
 Input:          -
 Output:         E    = screen mode (1,2=CPC/EP, 5,6,7=MSX, 8,9,10,11=G9K,
-                                   0=PCW)
+                                   0=PCW, ...)
                 D    = number of colours (2-16)
                 IX   = X resolution
                 IY   = Y resolution

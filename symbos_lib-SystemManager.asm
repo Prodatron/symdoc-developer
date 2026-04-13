@@ -448,7 +448,7 @@ ifdef use_SySystem_LNGLOD
 SySystem_LNGLOD
 ;******************************************************************************
 ;*** Name           Language_Load
-;*** Input          IXL= application's default language ID
+;*** Input          IXL= application's default language ID (usually 9 for english)
 ;***                IXH= pack
 ;***                IYL= version
 ;***                A  = application path bank

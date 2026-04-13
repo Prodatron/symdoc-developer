@@ -134,18 +134,17 @@ string. In this case, there must always be another string following it.
 
 MULTILINGUAL FUNCTION
 
-Like all internationalization functions, the function for replacing multilingual
-texts is provided by the Extended Desktop module. It is called using the System
-Manager system library. First, a message is sent to the System Manager. The
-System Manager then checks whether the Extended Desktop has been loaded. If so,
-the request is forwarded to the System Manager, and the result is then sent back
-to the application. Otherwise, the application receives an error message
-directly. This way, the application does not need to check for the presence of
-the Extended Desktop itself and only needs to communicate with the System
-Manager.
+Like all internationalization functions, the function for replacing
+multilingual texts is provided by the Extended Desktop module. It is called
+using the System Manager system library. First, a message is sent to the System
+Manager, which then checks whether the Extended Desktop has been loaded. If so,
+the request is forwarded, and the result is then sent back to the application.
+Otherwise, the application receives an error message directly. This way, the
+application does not need to check for the presence of the Extended Desktop
+itself and only needs to communicate with the System Manager.
 -------------------------------------------------------------------------------
 Name            SySystem_LNGLOD
-Input           IXL= application's default language ID
+Input           IXL= application's default language ID (usually 9 for english)
                 IXH= pack number
                 IYL= version number
                 A  = application path bank
@@ -171,7 +170,7 @@ Description     Tries to replace the default language of the application with
                 The text bank and address must point to the first entry in the
                 text pointer list, which must be located directly before the
                 section containing the text strings. Each text pointer is 3
-                bytes in size. A byte with the value 1, followed by a word that
+                bytes in size: A byte with the value 1, followed by a word that
                 references the text string. The number of text pointers must
                 correspond to the number of texts in the respective package.
                 The package number selects the text package if multiple text

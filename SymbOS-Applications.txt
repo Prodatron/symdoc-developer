@@ -34,7 +34,7 @@ other parts will be hidden. This is also called memory mapping.
 
 Initially SymbOS has been developed for the Amstrad CPC computers. The CPC-6128
 machines already had quite powerful bankswitching possibilities compared to
-other 8bit computers from the 80ies. At least it is possible to execute
+other 8bit computers from the 1980ies. At least it is possible to execute
 programs located directly beyond the 64KB barrier. Some other 8bit machines are
 more limited and can e.g. use the extended memory only as a Ram disc or map one
 single 16K portion only, while other systems are even more advanced.
