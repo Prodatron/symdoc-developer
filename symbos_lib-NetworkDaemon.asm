@@ -610,7 +610,7 @@ ifdef use_SyNet_UDPSTA
 SyNet_UDPSTA
         call snwmsgi_af
         db FNC_NET_UDPSTA
-        jp snwmsgo_afbcdehlixiy
+        jp snwmsgo_afbcdehl
     endif
 endif
 
@@ -640,9 +640,9 @@ ifdef use_SyNet_UDPRCV
 ;***                already been specified with the UDPOPN function.
 ;******************************************************************************
 SyNet_UDPRCV
-        call snwmsgi_afhl
+        call snwmsgi_afbcdehl
         db FNC_NET_UDPRCV
-        jp snwmsgo_afhl
+        jp snwmsgo_afbcdehlixiy
     endif
 endif
 
