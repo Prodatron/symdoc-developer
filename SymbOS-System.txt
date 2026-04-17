@@ -33,12 +33,12 @@ Message:        00  1B  016
                 04  1B  Priority (1[high] - 7[low])
                 - if P3[bit4]=1:
                 10  1B  Additional flags
-                        [Bit0  ] Flag, if start-in path available
+                        [Bit0  ] Flag, if work directory available
                 11  1B  Window mode (0=unchanged, 1=normal, 2=maximized,
                                      3=minimized, +128=open window centered))
                 - if P3[bit4]=1 and P10[bit0]=1:
-                12  1W  Start-in path (max 128bytes, including 0-terminator),
-                        same ram bank like file path
+                12  1W  working directory (max 128bytes, including
+                        0-terminator), same ram bank like file path
 Description:    Loads and starts an application or opens a document with a
                 known type by loading the associated application first.
                 If Bit7 of P3 is not set, the system will open a message box,
