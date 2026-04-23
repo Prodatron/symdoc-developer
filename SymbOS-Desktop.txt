@@ -531,8 +531,9 @@ Description:    A opened context menu has been clicked of canceled.
 ID:             169 (MSR_DSK_STIADD)
 Name:           SystrayIcon_Add_Response
 Message:        00  1B  169
-                01  1B  0=icon has been added, 1=no more slot available
-                - if P1 is 0:
+                01  1B  Bit[0]=success status (0 = icon has been added,
+                                               1 = no more slot available)
+                - if icon has been added:
                 02  1B  icon ID
 Description:    After a systray icon has been added successfully you will
                 receive its ID in P2. This ID has to be used when removing

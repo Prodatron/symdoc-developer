@@ -51,11 +51,11 @@ SySystem_PRGRUN
 ;***                - if alternative priority:
 ;***                E  = priority (1[high] - 7[low])
 ;***                - if additional options:
-;***                IXL= [Bit0]   Flag, if working directory path available
+;***                IXL= [Bit0]   Flag, if work directory path available
 ;***                IXH= Window Mode (0=unchanged, 1=normal, 2=maximized,
 ;***                                  3=minimized, +128=open window centered)
-;***                - if working directory available:
-;***                IY = working directory (up to 128bytes including
+;***                - if work directory available:
+;***                IY = work directory (up to 128bytes including
 ;***                     0-terminator), same ram bank like file path
 ;*** Output         A  = Success status
 ;***                     0 = OK
@@ -498,17 +498,17 @@ endif
 ;******************************************************************************
 ;*** Name           Macro_APPINI
 ;*** Input          0/main window data record
-;***                0/working_directory
+;***                0/work_directory
 ;*** Destroyed      AF,BC,DE,HL
-;*** Description    Optionally sets the window mode and working directory that
+;*** Description    Optionally sets the window mode and work directory that
 ;***                have been configured for the application in the icon or
 ;***                start menu shortcut. The parameters must be the addresses
-;***                of the window data record and the working directory string
-;***                (up to 128 bytes including a zero terminator), which is
-;***                used e.g. as the starting point when opening a document.
+;***                of the window data record and the work directory string (up
+;***                to 128 bytes including a zero terminator), which is used
+;***                e.g. as the starting point when opening a document.
 ;***                If either parameter is set to 0, it is ignored.
 ;******************************************************************************
-macro SyMacro_APPINI window_record, working_directory
+macro SyMacro_APPINI window_record, work_directory
     if "window_record" = "0"
     else
         ld a,(App_BegCode+47)       ;window mode
@@ -517,9 +517,9 @@ macro SyMacro_APPINI window_record, working_directory
         ld (window_record+0),a
         @appini1
     endif
-    if "working_directory" = "0"
+    if "work_directory" = "0"
     else
-        ld a,(App_BegCode+46)       ;working directory
+        ld a,(App_BegCode+46)       ;work directory
         bit 0,a
         jr z,@appini2
         ld hl,(App_BegCode)
@@ -527,7 +527,7 @@ macro SyMacro_APPINI window_record, working_directory
         add hl,bc
         ld bc,128
         sbc hl,bc
-        ld de,working_directory
+        ld de,work_directory
         ldir
         @appini2
     endif

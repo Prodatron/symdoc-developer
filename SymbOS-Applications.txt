@@ -210,7 +210,7 @@ header have been replaced by new data.
 014   1B    Ram bank number (1-15), where the application is located
 040   6B    *RESERVED*
 046   1B    Flags
-            [bit0]=1 working directory (up to 128bytes including 0-terminator)
+            [bit0]=1 work directory (up to 128bytes including 0-terminator)
                      available at offset 128 behind the code area
 047   1B    window mode (0=unchanged, 1=normal, 2=maximized, 3=minimized,
                          +128=open window centered)
@@ -350,9 +350,9 @@ As your code area can be extended by additional reserved memory (see 056 in the
 header) the total additional memory is the maximum of 256 and the value at 056
 in the header.
 
-The working directory is the "start in" path in the shortcut dialogues for
-icons and startmenu entries. It can be used e.g. as the starting point when
-opening a document. If it is available (see bit0 of 046 in the header after
+The work directory is the "start in" path in the shortcut dialogues for icons
+and startmenu entries. It can be used e.g. as the starting point when opening a
+document. If it is available (see bit0 of 046 in the header after
 initialization), you will find it at offset 128 inside the additional 256 bytes
 behind the code area. It has a maximum size of 128bytes including the 0-
 terminator.
