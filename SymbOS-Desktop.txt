@@ -328,15 +328,17 @@ Message:        00  1B  053
                 01  1B  Icon ram bank (0-15)
                 02  1W  Icon address
                 04  1B  click code
+                05  1B  process ID
 Limitation:     8x8 pixel SymbOS standard graphic
 Description:    Adds a systray icon to the task bar. These can be clicked
                 by the user, which will generate an event sent to the
-                application by the desktop manager (see MSR_DSK_EVTCLK).
+                application process by the desktop manager (see
+                MSR_DSK_EVTCLK).
                 The icon is a 8x8 pixel SymbOS standard graphic (see
                 SymbOS-DesktopDataRecords.txt, Graphics, "Standard graphics").
-                P1 defines the click code, which is sent to the application
-                as the MSR_DSK_EVTCLK event, if the user clicks the systray
-                icon.
+                P4 defines the click code, which is sent to the application
+                process (its ID has to be specified in P5) as the
+                MSR_DSK_EVTCLK event, if the user clicks the systray icon.
 Response:       See MSR_DSK_STIADD
 -------------------------------------------------------------------------------
 ID:             054 (MSC_DSK_STIREM)
@@ -544,9 +546,9 @@ Name:           Event_Click_Response
 Message:        00  1B  170
                 01  1B  click code
                 02  1B  mouse key (0=left, 1=right, 2=left double click)
-Description:    This message is sent by the desktop manager to the application,
-                if a special click event occurred. Currently this only happens
-                if the user clicks a systray icon (see MSC_DSK_STIADD).
+Description:    This message is sent by the desktop manager to the application
+                process, if a special click event occurred. Currently this only
+                happens if the user clicks a systray icon (see MSC_DSK_STIADD).
                 With the click code you can find out, which of your systray
                 icons has been clicked. If you only have one you can ignore the
                 click code.
