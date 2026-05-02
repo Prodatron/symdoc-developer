@@ -320,16 +320,24 @@ Description:    Plots a text, which can include control codes (0-28). The
                                  1W - font address; can be placed in any bank,
                                       within a 16K block (memory type "data")
                 03 - various
-                     Parameters: - for line feed:
+                     Parameters: - for setting flags:
+                                 1B [bit5-7]=000
+                                    [bit0]  =underlined (1=on)
+                                    [bit1-4]=*reserved* (set to 0)
+                                 - for underline stroke values
+                                 1B [bit6-7]=01
+                                    [bit0-1]=ysize (final size of the underline
+                                             stroke is ysize+1; default=0)
+                                    [bit2-5}=yoffset (final yposition of the
+                                             underline stroke is text yposition
+                                             +ycharsize+yoffset-11; default=10;
+                                             ycharsize+yoffset-11 must be >=0)
+                                 - for line feed:
                                  1B [bit7]  =1
                                     [bit0-6]=y offset of the new line
-                                 - for setting flags:
-                                 1B [bit6-7]=00
-                                    [bit0]  =underlined (1=on)
-                                    [bit1-5]=*reserved* (set to 0)
-                                 - *reserved*:
-                                 1B [bit6-7]=01
-                                    [bit0-5]=*reserved*
+                                 - *reserved*
+                                 1B [bit5-7]=001
+                                    [bit0-4]=*reserved*
                 04 - *reserved*
                 05 - insert additional space between the current and the next
                      character
