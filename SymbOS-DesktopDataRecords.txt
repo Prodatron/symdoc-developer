@@ -319,11 +319,18 @@ Description:    Plots a text, which can include control codes (0-28). The
                                  1B - #01
                                  1W - font address; can be placed in any bank,
                                       within a 16K block (memory type "data")
-                03 - set flags
-                     Parameters: 1B - flags
-                                      [bit0]  =underlined (1=on)
-                                      [bit1-7]=*reserved* (set to 0)
-                04 - *undefined*
+                03 - various
+                     Parameters: - for line feed:
+                                 1B [bit7]  =1
+                                    [bit0-6]=y offset of the new line
+                                 - for setting flags:
+                                 1B [bit6-7]=00
+                                    [bit0]  =underlined (1=on)
+                                    [bit1-5]=*reserved* (set to 0)
+                                 - *reserved*:
+                                 1B [bit6-7]=01
+                                    [bit0-5]=*reserved*
+                04 - *reserved*
                 05 - insert additional space between the current and the next
                      character
                      Parameters: 1B - amount of pixels
@@ -1236,8 +1243,8 @@ List of all changes:
   - the use of code 01 (pen/paper setting) in the first byte is no longer
     permitted
   - codes for enabling/disabling underlining (03, 04) have been replaced by a
-    code for setting flags (03), one of which represents the underlining mode;
-    code 04 is currently unused
+    code for doing various things (03); code 04 is currently not in use and
+    reserved for future extensions
   - codes for inserting dynamic whitespace have been limited from 12–31 to
     12–28, allowing a maximum insertion of 20 pixels (29, 30, 31 now draw
     system characters)
