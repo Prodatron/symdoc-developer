@@ -305,7 +305,9 @@ the Microsoft "Windows Language Code Identifiers" (MS-LCID).
 CODEPAGES
 
 The following codepages with international character sets are currently
-available. See "SymbOS-Multilingual-Codepages.txt" for details.
+available. See
+https://github.com/Prodatron/symrsc-i18n/blob/main/SymbOS-Multilingual-Codepages.txt
+for details.
 
 02 - LATIN 1    (Windows CP 1252 + turkish characters)
 
@@ -338,5 +340,6 @@ available. See "SymbOS-Multilingual-Codepages.txt" for details.
 ===============================================================================
 UNICODE IDS
 
-See "SymbOS-Multilingual-Characters.txt".
+See
+https://github.com/Prodatron/symrsc-i18n/blob/main/SymbOS-Multilingual-Characters.txt
 -------------------------------------------------------------------------------
