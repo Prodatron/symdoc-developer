@@ -305,7 +305,8 @@ the Microsoft "Windows Language Code Identifiers" (MS-LCID).
 CODEPAGES
 
 The following codepages with international character sets are currently
-available. See
+available.
+See
 https://github.com/Prodatron/symrsc-i18n/blob/main/SymbOS-Multilingual-Codepages.txt
 for details.
 

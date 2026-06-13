@@ -1,5 +1,5 @@
 S Y M B O S   D E V E L O P E R   D O C U M E N T A T I O N
-Date: 25.08.2007
+Date: 23.05.2026
 ===============================================================================
 
 
@@ -14,23 +14,23 @@ are used in SymbOS.
 
       Bank 0                Bank 1                Bank n
 FFFF  +-----------------+   +-----------------+   +-----------------+
-      |                 |   |                 |   |                 |
-      |                 |   | free            |   |                 |
-      | VideoRAM [0]    |   |                 |   | free            |
-      | (line 0-175)    |   | SystemData      |   |                 |
-      |                 |   | DesktopManagerEx|   |                 |
-C000  +-----------------+   +-----------------+   +-----------------+
-      | Buffers         |   |                 |   |                 |
-      | SubRoutines     |   |                 |   |                 |
-      | FileManager-LL  |   | free            |   | free            |
-      |                 |   |                 |   |                 |
-      | ScreenManager   |   |                 |   |                 |
-8000  +-----------------+   +-----------------+   +-----------------+
       |                 |   | SystemData      |   |                 |
+      |                 |   |                 |   |                 |
+      | VideoRAM [A]    |   | free            |   | free            |
+      | (line 0-175)    |   |                 |   |                 |
+      |                 |   |                 |   |                 |
+C000  +-----------------+   +-----------------+   +-----------------+
+      | Buffers         |   | free            |   |                 |
+      | SubRoutines     |   |                 |   |                 |
+      | FileManager-LL  |   | RollerRAM       |   | free            |
+      |                 |   | VideoRAM [B]    |   |                 |
+      | ScreenManager   |   | (line 176-255)  |   |                 |
+8000  +-----------------+   +-----------------+   +-----------------+
+      |                 |   | free            |   |                 |
+      |                 |   | SystemData      |   |                 |
+      | DesktopManager  |   | DesktopManagerEx|   | free            |
       |                 |   | SystemManagerEx |   |                 |
-      | DesktopManager  |   |                 |   | free            |
-      |                 |   | VideoRAM [1]    |   |                 |
-      |                 |   | (line 176-255)  |   |                 |
+      |                 |   | DeviceManagerEx |   |                 |
 4000  +-----------------+   +-----------------+   +-----------------+
       | DesktopManager  |   |                 |   |                 |
       | SystemManager   |   |                 |   |                 |

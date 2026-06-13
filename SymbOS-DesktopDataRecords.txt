@@ -319,7 +319,7 @@ Description:    Plots a text, which can include control codes (0-28). The
                                  1B - #01
                                  1W - font address; can be placed in any bank,
                                       within a 16K block (memory type "data")
-                03 - various
+                03 - various (underlined on/off/parameters, line feed)
                      Parameters: - for setting flags:
                                  1B [bit5-7]=000
                                     [bit0]  =underlined (1=on)
@@ -1011,9 +1011,9 @@ The extended header is build like this:
 
         If [bit4]=1, the encoding type was 5 (MSX, 16 colours) before and has
         has been converted to CPC, 4 colours. Such a graphic will still keep
-        the original header values for graphic width in bytes, graphic size and
-        graphic address, as application may use multiple headers, which show
-        different parts of the same graphic.
+        the original header values for graphic width in bytes, graphic size in
+        bytes and graphic address including the area offset, as application may
+        use multiple headers, which show different parts of the same graphic.
 ??+1 x  graphic data
 
 The following is a description of the MSX 16 colour format. Each byte contains

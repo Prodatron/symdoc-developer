@@ -27,10 +27,10 @@ C000  +-----------------+   +-----------------+   +-----------------+
       | ScreenManager   |   |                 |   |                 |
 8000  +-----------------+   +-----------------+   +-----------------+
       |                 |   | free            |   |                 |
-      |                 |   |                 |   |                 |
-      | DesktopManager  |   | SystemData      |   | free            |
-      |                 |   | DesktopManagerEx|   |                 |
+      |                 |   | SystemData      |   |                 |
+      | DesktopManager  |   | DesktopManagerEx|   | free            |
       |                 |   | SystemManagerEx |   |                 |
+      |                 |   | DeviceManagerEx |   |                 |
 4000  +-----------------+   +-----------------+   +-----------------+
       | DesktopManager  |   |                 |   |                 |
       | SystemManager   |   |                 |   |                 |

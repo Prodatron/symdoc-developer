@@ -60,6 +60,7 @@
 ;use_SyDesktop_DSKPLT    equ 0   ;Redraws the complete screen
 ;use_SyDesktop_SCRCNV    equ 0   ;Converts 4 colour graphics to 4/16 indexed
 ;use_SyDesktop_SNDDEM    equ 0   ;Sound Daemon
+;use_SyDesktop_KEYINT    equ 0   ;International keyboard mapping
 
 
 ;### MAIN FUNCTIONS ###########################################################
@@ -978,6 +979,24 @@ SyDesktop_SNDDEM
     endif
 endif
 
+ifdef use_SyDesktop_KEYINT
+    if use_SyDesktop_KEYINT=1
+SyDesktop_KEYINT
+;******************************************************************************
+;*** Name           DesktopService_KeyboardInternational
+;*** Input          D  = Bit[0-6] primary charcode (28-127)
+;***                     Bit[7]   flag, if only codes 32-127 allowed
+;*** Output         E  = Bit[0]   =1 -> no char available
+;***                     Bit[6]   =1 -> last char, =0 -> more chars available 
+;***                - if E[bit0]=0
+;***                D  = international char
+;*** Destroyed      AF,BC,E,H,IX,IY
+;*** Description    [...]
+;******************************************************************************
+        ld a,DSK_SRV_KEYINT
+        jp SyDesktop_Service
+    endif
+endif
 
 
 ;### SUB ROUTINES #############################################################
@@ -1003,6 +1022,8 @@ SyDesktop_Service
         cp DSK_SRV_COLGET
         jr z,SyDSrv1
         cp DSK_SRV_DSKSTP
+        jr z,SyDSrv1
+        cp DSK_SRV_KEYINT
         ret nz
 SyDSrv1 call SyDesktop_WaitMessage
         cp MSR_DSK_DSKSRV
